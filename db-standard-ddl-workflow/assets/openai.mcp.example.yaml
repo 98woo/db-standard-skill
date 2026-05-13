@@ -1,0 +1,13 @@
+interface:
+  display_name: "DB Standard DDL Workflow"
+  short_description: "표준 단어/용어/도메인 사전을 조회하고 DDL preview를 생성합니다."
+  default_prompt: "Validate execution context first. Use live dictionary tools when available."
+policy:
+  allow_implicit_invocation: false
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "dbStandardCatalog"
+      description: "Lookup standard word/term/domain dictionaries and optionally execute approved SQL."
+      transport: "streamable_http"
+      url: "https://your-internal-mcp-endpoint"

@@ -1,0 +1,8 @@
+interface:
+  display_name: "DB Standard DDL Workflow"
+  short_description: "표준 단어/용어/도메인 사전을 기준으로 DDL·정의서 INSERT·네이밍 결정을 생성합니다."
+  default_prompt: "Validate execution context first. Return preview SQL by default. Do not execute writes without explicit approval."
+policy:
+  allow_implicit_invocation: false
+# Optional MCP dependency example:
+# See assets/openai.mcp.example.yaml
