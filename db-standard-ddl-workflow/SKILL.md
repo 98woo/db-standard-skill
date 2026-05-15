@@ -46,15 +46,15 @@ description: Generate standardized DDL, metadata INSERT previews, and naming dec
 
 그 다음 `references/10-execution-context.md`에 따라 아래 값을 확보한다.
 
-- 프로젝트 식별 정보
-- DBMS 종류 / 버전
-- DBMS profile / 업무 대상 namespace-주제영역 매핑
-- 프로젝트 산출물 위치 `db_standard.db_standard` / 정의서 테이블명
+- `project.project_id`, `project.project_nm`
+- `dbms.type`, `dbms.version`, `dbms.profile`
+- `physical_target.db_nm`, `physical_target.target_namespace_map`
+- `metadata_repository.project_schema_nm`, 정의서 테이블명
 - 신규 프로젝트: 테이블 정의서 / 컬럼 정의서 한글 컬럼 목록
-- 기존 프로젝트: 테이블 정의서 / 컬럼 정의서 field map
-- 시퀀스명
-- run_mode
-- (선택) catalog_lookup_mode, write_execution_enabled
+- 기존 프로젝트: `metadata_repository.*.field_map`
+- `standard_repository.word_seq`, `standard_repository.term_seq`, 정의서 식별자 생성 규칙
+- `run_control.run_mode`
+- (선택) `run_control.catalog_lookup_mode`, `run_control.write_execution_enabled`
 
 Execution Context가 없으면 **절대 진행하지 않는다**.
 
@@ -94,6 +94,7 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
 ### 컬럼 / 도메인 처리 단계
 - `references/50-column-domain-decision.md`
 - `references/81-spatial-rules.md` (공간정보 테이블일 때만)
+- `references/14-bootstrap-role-mapping.md` (신규 프로젝트 정의서 bootstrap일 때)
 
 ### SQL 렌더링 단계
 - `references/25-catalog-query-templates.md`
@@ -119,7 +120,7 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
    - 신규 프로젝트의 정의서 테이블 bootstrap에는 표준 사전 조회 / 웹 검색 / 도메인 판단을 적용하지 않음
    - 신규 프로젝트의 정의서 테이블 컬럼은 한글 컬럼명을 자동 `snake_case`로 변환하고 타입은 모두 `text`로 생성
    - 신규 프로젝트의 정의서 한글 테이블명 / 컬럼명은 DB comment로 추가
-   - 신규 프로젝트의 내부 field map은 생성된 정의서 컬럼명에서 자동 추론
+   - 신규 프로젝트의 내부 field map은 `references/14-bootstrap-role-mapping.md`를 우선 적용한 뒤 생성된 정의서 컬럼명에서 추론
    - 신규 프로젝트는 initial context로 bootstrap preview를 만들고, field map 생성 후 finalized execution context로 일반 업무 테이블 표준화를 진행
    - 기존 프로젝트면 작성용 파일의 위치 정보를 기준으로 실제 DB 조회 후 프로파일을 복원
    - 해석한 Execution Context 요약과 누락 / 충돌 검증 결과를 사용자에게 확인받음
@@ -128,11 +129,11 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
 1. **Execution Context 검증**
    - 필수 값 누락 여부 확인
    - `dbms.type`과 DBMS profile이 확정됐는지 확인
-   - 요청의 `데이터베이스`가 `target_db_nm`과 일치하는지 확인
-   - 요청의 대상 namespace가 `target_namespace_map`에 정의된 값인지 확인
+   - 요청의 `데이터베이스`가 `physical_target.db_nm`과 일치하는지 확인
+   - 요청의 대상 namespace가 `physical_target.target_namespace_map`에 정의된 값인지 확인
    - 요청의 주제영역 / 소유자 코드가 대상 namespace 라우팅 규칙과 일치하는지 확인
    - 대상 namespace가 생략되면 주제영역 / 소유자 코드로 단일 `target_namespace_nm`을 확정
-   - `run_mode`와 사용자 `실행 요청`이 일치하는지 확인
+   - `run_control.run_mode`와 사용자 `실행 요청`이 일치하는지 확인
 
 2. **요청 계약 검증**
    - 이미지 기반 요청인지, 텍스트 기반 요청인지 판별
@@ -196,8 +197,8 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
    - quote identifier는 프로젝트 규칙이 없는 한 사용하지 않는다.
 
 9. **실행 통제**
-   - `run_mode != execute` 이면 절대 쓰기 SQL을 실행하지 않는다.
-   - `run_mode == execute` 이어도 설계자의 명시적 승인과 쓰기 가능 환경이 모두 있어야 실행 가능하다.
+   - `run_control.run_mode != execute` 이면 절대 쓰기 SQL을 실행하지 않는다.
+   - `run_control.run_mode == execute` 이어도 설계자의 명시적 승인과 쓰기 가능 환경이 모두 있어야 실행 가능하다.
    - 둘 중 하나라도 없으면 preview만 반환한다.
    - 물리 DDL은 확정된 `target_namespace_nm`을 DBMS profile에 맞게 렌더링한 대상에만 실행한다.
 
@@ -222,5 +223,5 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
 - blocker / pending decision이 분리되어 제시되었다.
 - 테이블명 / 컬럼명 / 정의서 INSERT / DDL 사이의 식별자가 일관된다.
 - 코멘트는 정의서 한글명과 일치한다.
-- run_mode에 맞게 preview 또는 execution plan이 구분되었다.
+- `run_control.run_mode`에 맞게 preview 또는 execution plan이 구분되었다.
 - `references/95-review-checklist.md` 기준 점검이 끝났다.

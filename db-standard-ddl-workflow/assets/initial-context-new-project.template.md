@@ -69,10 +69,10 @@ metadata_repository: # metadata_repository(프로젝트 산출물 저장소)
   bootstrap_policy: # bootstrap_policy(정의서 테이블 생성 정책)
     standardization_applied: false # standardization_applied(표준화 적용 여부)
     web_search_allowed: false # web_search_allowed(웹 검색 허용 여부)
-    physical_name_generation: ai_auto_snake_case # physical_name_generation(물리명 생성 방식)
+    physical_name_generation: bootstrap_role_mapping_then_snake_case # physical_name_generation(물리명 생성 방식)
     column_data_type: text # column_data_type(정의서 컬럼 데이터 타입)
     comment_source: korean_name # comment_source(comment 원천)
-    role_mapping_mode: ai_auto_infer # role_mapping_mode(role 매핑 방식)
+    role_mapping_mode: reference_first # role_mapping_mode(role 매핑 방식): references/14-bootstrap-role-mapping.md 우선
 
   table_definition: # table_definition(테이블 정의서)
     korean_table_name: 테이블 정의서 # korean_table_name(한글 테이블명)

@@ -23,7 +23,7 @@
 - 주제 영역 명
 - 주제 영역 코드
 - 주제 영역 그룹 명
-- 데이터베이스 (`target_db_nm`)
+- 데이터베이스 (`physical_target.db_nm`)
 - 대상 namespace (`target_namespace_nm`)
 
 ## 2. 공통 규칙
@@ -72,9 +72,9 @@
 9. DBMS별 casing 적용
 
 대상 namespace 확정:
-- 요청에 대상 namespace가 있으면 `target_namespace_map`에 존재하는지 확인한다.
+- 요청에 대상 namespace가 있으면 `physical_target.target_namespace_map`에 존재하는지 확인한다.
 - 요청의 주제영역 코드 또는 테이블소유자 코드가 대상 namespace의 `subject_area_cds` 또는 `owner_codes`에 포함되는지 확인한다.
-- 요청에 대상 namespace가 없으면 주제영역 코드 또는 테이블소유자 코드로 `target_namespace_map`에서 단일 namespace를 찾아 확정한다.
+- 요청에 대상 namespace가 없으면 주제영역 코드 또는 테이블소유자 코드로 `physical_target.target_namespace_map`에서 단일 namespace를 찾아 확정한다.
 - namespace와 주제영역 / 소유자 코드가 충돌하면 blocked 상태다.
 - 여러 namespace가 매칭되면 pending decision 상태다.
 
@@ -140,7 +140,7 @@
 role 값:
 
 - `table_id` = `{tbl_dfn_seq}` next value 또는 프로젝트 정의서의 식별자 생성 규칙
-- `target_db` = 요청 데이터베이스 (`target_db_nm`)
+- `target_db` = 요청 데이터베이스 (`physical_target.db_nm`)
 - `target_schema` = 확정된 대상 namespace (`target_namespace_nm`). 정의서 호환 role 이름은 유지한다.
 - `owner` = 정규화된 테이블소유자
 - `logical_table_name` = canonical 한글 테이블명

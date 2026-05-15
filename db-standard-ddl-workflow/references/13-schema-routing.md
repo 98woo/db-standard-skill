@@ -93,7 +93,7 @@ target_namespace_map:
 
 라우팅 결과에는 아래를 포함한다.
 
-- `target_db_nm` 또는 DBMS별 connection target
+- `physical_target.db_nm` 또는 DBMS별 connection target
 - `target_namespace_nm`
 - `target_namespace_kind`
 - DBMS별 렌더링 이름: `target_schema_nm` | `target_owner_nm` | `target_database_nm`

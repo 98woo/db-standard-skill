@@ -103,11 +103,12 @@ DBMS profile과 작업 유형이 확정되면 에이전트는 skill 패키지의
 
 - 표준 단어 / 용어 / 도메인 사전을 조회하지 않는다.
 - 웹 검색을 사용하지 않는다.
-- 한글 컬럼명을 에이전트가 자동으로 영문 `snake_case` 물리 컬럼명으로 변환한다.
+- 한글 컬럼명은 `references/14-bootstrap-role-mapping.md`를 우선 적용해 영문 물리 컬럼명과 role을 확정한다.
+- 매핑 표에 없는 추가 컬럼만 일반적인 의미 기반 `snake_case` 물리 컬럼명으로 변환한다.
 - 영문명 후보를 사용자에게 제안하지 않고 자동 적용한다.
 - 정의서 테이블 컬럼 타입은 모두 `text`로 고정한다.
 - 한글 테이블명 / 컬럼명은 DB comment로 추가한다.
-- 에이전트는 생성된 물리 컬럼명을 기준으로 내부 field map을 자동 추론한다.
+- 에이전트는 role mapping 표와 생성된 물리 컬럼명을 기준으로 내부 field map을 자동 생성한다.
 
 ### 대상 namespace 라우팅 입력 형식
 
@@ -143,8 +144,8 @@ target_namespace_map:
 - 표준 사전 필수 컬럼 존재 여부
 - 프로젝트 산출물 namespace `db_standard` 존재 여부
 - 테이블 정의서 / 컬럼 정의서 한글 컬럼 목록 존재 여부
-- 한글 컬럼명에서 영문 `snake_case` 물리 컬럼명 생성 가능 여부
-- 필수 role을 내부 field map으로 추론할 수 있는지 여부
+- `references/14-bootstrap-role-mapping.md` 기준 필수 role 확정 가능 여부
+- 매핑되지 않은 추가 한글 컬럼명에서 영문 `snake_case` 물리 컬럼명 생성 가능 여부
 - 산출물 namespace가 없고 `execute` 승인이 있으면 DBMS profile에 맞는 생성 preview 또는 실행 계획 생성
 - 정의서 테이블 생성 방식이 `create`이면 모든 컬럼 `text` 타입으로 테이블 정의서 / 컬럼 정의서 DDL 생성
 - 정의서 테이블 생성 방식이 `use_existing`이면 실제 컬럼 구조와 field map 정합성 검증

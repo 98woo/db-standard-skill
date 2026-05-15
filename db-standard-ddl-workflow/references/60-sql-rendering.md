@@ -25,6 +25,7 @@
 - 모든 SQL은 전체 식별자(full identifier)를 사용한다.
 - preview SQL과 execution SQL을 구분한다.
 - logical identifier와 DBMS rendered identifier를 혼동하지 않는다.
+- 이 문서의 SQL 블록은 logical template이다. 최종 출력 시 DBMS profile과 dialect를 적용해 object identifier, casing, bind marker, sequence expression을 렌더링한다.
 - 동일한 `table_id` role 값은 테이블 정의서 / 컬럼 정의서 INSERT에서 일관되게 재사용돼야 한다.
 - quote identifier는 프로젝트 규칙이 없는 한 사용하지 않는다.
 
@@ -106,7 +107,7 @@ COMMENT ON COLUMN {standard_artifact_object_identifier}.{generated_column_name}
 generic template:
 
 ```sql
-INSERT INTO {meta_schema_nm}.{tbl_dfn_tbl_nm} (
+INSERT INTO {standard_artifact_object_identifier(metadata_repository.table_definition.table_nm)} (
   {table_definition_columns_from_field_map}
 ) VALUES (
   {table_definition_values_from_resolved_context}
@@ -117,7 +118,8 @@ INSERT INTO {meta_schema_nm}.{tbl_dfn_tbl_nm} (
 정의서 호환을 위해 role 이름은 `target_schema`를 유지하지만 값의 의미는 DBMS profile의 namespace다.
 테이블 정의서 중복 검사는 `target_db + target_schema + physical_table_name` 기준으로 수행한다.
 
-PostgreSQL 등 `NEXTVAL` 문법이 다른 DBMS는 `references/80-dbms-dialects.md` 규칙으로 렌더링한다.
+시퀀스 next value 표현은 `{next_value(sequence_name)}` placeholder를 사용하고,
+최종 출력 시 `references/80-dbms-dialects.md` 규칙으로 DBMS별 문법을 적용한다.
 
 ## 5. 컬럼 정의서 INSERT preview 규칙
 
@@ -139,7 +141,7 @@ PostgreSQL 등 `NEXTVAL` 문법이 다른 DBMS는 `references/80-dbms-dialects.m
 generic template:
 
 ```sql
-INSERT INTO {meta_schema_nm}.{col_dfn_tbl_nm} (
+INSERT INTO {standard_artifact_object_identifier(metadata_repository.column_definition.table_nm)} (
   {column_definition_columns_from_field_map}
 ) VALUES (
   {column_definition_values_from_resolved_context}
@@ -199,7 +201,7 @@ INSERT INTO db_standard.tb_db_com_std_word (
   dmn_yn,
   dmn_clsf_nm
 ) VALUES (
-  {std_word_seq}.NEXTVAL,
+  {next_value(standard_repository.word_seq)},
   :word_nm,
   :word_eng_abbr_nm,
   :dmn_yn,
@@ -232,7 +234,7 @@ INSERT INTO db_standard.tb_db_com_std_trm (
   rvsn_cn,
   rvsn_rsn
 ) VALUES (
-  {std_trm_seq}.NEXTVAL,
+  {next_value(standard_repository.term_seq)},
   '신규',
   :trm_nm,
   '-',
@@ -348,7 +350,13 @@ generic preview:
 CREATE SEQUENCE {sequence_name};
 ```
 
-실제 문법은 DBMS별 방언을 따른다.
+sequence 값을 INSERT에 사용할 때는 DBMS-neutral placeholder를 먼저 사용한다.
+
+```sql
+{next_value(sequence_name)}
+```
+
+최종 렌더링 예시는 `references/80-dbms-dialects.md`의 next value rendering 표를 따른다.
 
 ## 14. 데이터 길이 표현 규칙
 

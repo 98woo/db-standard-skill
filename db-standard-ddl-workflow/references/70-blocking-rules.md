@@ -24,7 +24,7 @@
 - 해석한 Execution Context 요약에 대한 사용자 확인 없음
 - 필수 context 값 누락
 - namespace명 / 시퀀스명 / 테이블명 불명확
-- `target_namespace_map` 누락
+- `physical_target.target_namespace_map` 누락
 - 신규 프로젝트에서 정의서 한글 컬럼 목록 누락
 - 신규 프로젝트에서 한글 컬럼명 자동 `snake_case` 변환 불가
 - 테이블 정의서 / 컬럼 정의서 field map 자동 추론 실패
@@ -61,11 +61,11 @@
 - 재사용 후보 확인 없이 신규 단어 / 신규 용어 등록을 진행하려는 상황
 
 ### 2.6 요청 / context 불일치
-- 요청 `데이터베이스` != context `target_db_nm`
-- 요청 `대상 namespace`가 context `target_namespace_map`에 없음
-- 요청 `대상 namespace`와 주제영역 / 소유자 코드가 context `target_namespace_map` 기준으로 충돌
+- 요청 `데이터베이스` != context `physical_target.db_nm`
+- 요청 `대상 namespace`가 context `physical_target.target_namespace_map`에 없음
+- 요청 `대상 namespace`와 주제영역 / 소유자 코드가 context `physical_target.target_namespace_map` 기준으로 충돌
 - 요청 `대상 namespace`가 없고 주제영역 / 소유자 코드로 단일 namespace를 확정할 수 없음
-- context `default_target_namespace_nm`이 `target_namespace_map`에 없음
+- context `optional_policies.default_target_namespace_nm`이 `physical_target.target_namespace_map`에 없음
   단, AGENTS override가 있으면 예외
 
 ## 3. PENDING_DECISION 조건
@@ -84,8 +84,8 @@
 
 아래 중 하나라도 해당하면 write execution은 하지 않는다.
 
-- `run_mode != execute`
-- `write_execution_enabled = false`
+- `run_control.run_mode != execute`
+- `run_control.write_execution_enabled = false`
 - 설계자의 명시 승인 없음
 - 실제 실행 도구 부재
 

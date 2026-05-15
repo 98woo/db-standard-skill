@@ -82,6 +82,18 @@ skill 내부에서는 먼저 canonical logical identifier를 만든다.
 - MySQL / MariaDB: 프로젝트 기본 auto increment / identity 전략 우선, standalone sequence는 명시 규칙 필요
 - SQL Server: identity 또는 sequence 중 프로젝트 정책을 따른다.
 
+`references/60-sql-rendering.md`에서는 next value를 `{next_value(sequence_name)}` placeholder로 표현한다.
+renderer는 DBMS별로 아래처럼 치환한다.
+
+| DBMS | next value rendering |
+| --- | --- |
+| Oracle | `{seq}.NEXTVAL` |
+| PostgreSQL | `nextval('{schema}.{seq}')` |
+| SQL Server | `NEXT VALUE FOR {schema}.{seq}` |
+| MySQL / MariaDB | auto increment 또는 project rule 필요 |
+
+MySQL / MariaDB에서 standalone sequence를 명시적으로 지원하는 버전 / 정책이 있으면 project rule로 override한다.
+
 ## 9. renderer checklist
 
 renderer는 최종 출력 전에 아래를 점검한다.

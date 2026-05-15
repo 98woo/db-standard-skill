@@ -240,7 +240,7 @@ term hit가 아니고 최종 컬럼명이 신규 생성된 경우,
 - 단일 재사용 후보를 거부하려면 표준 사전 관리자 승인 또는 프로젝트 표준 정책 근거가 필요하다.
 
 필드 규칙:
-- `trm_no` = `{std_trm_seq}` next value
+- `trm_no` = `{next_value(standard_repository.term_seq)}`
 - `enct_sec_nm` = `'신규'`
 - `trm_nm` = canonical 한글 컬럼명
 - `trm_expln` = `'-'`

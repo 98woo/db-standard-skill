@@ -1,12 +1,18 @@
 # Execution Context template for db-standard-ddl-workflow
-project_id:
-project_nm:
-dbms_type:
-dbms_version:
-dbms_connection_target:
-dbms_profile: auto
+# Canonical schema is nested. Do not add legacy flat aliases here.
+startup_mode: existing_project # new_project | existing_project
 
-# Fixed standard repository. Do not change.
+project:
+  project_id:
+  project_nm:
+
+dbms:
+  type: postgresql # postgresql | oracle | mysql | mariadb | sqlserver
+  version:
+  connection_target:
+  profile: auto
+
+# Fixed standard repository. Do not change logical names.
 standard_repository:
   logical_nm: db_standard
   db_nm: db_standard
@@ -19,7 +25,7 @@ standard_repository:
   word_seq: db_standard.seq_tb_db_com_std_word
   term_seq: db_standard.seq_tb_db_com_std_trm
 
-# Project metadata artifacts live under db_standard.db_standard.
+# Project metadata artifacts live under the db_standard standard repository.
 # For new projects, definition tables are bootstrapped from Korean column names:
 # standardization_applied=false, web_search_allowed=false,
 # physical names are generated as snake_case, and all definition columns are text.
@@ -27,7 +33,18 @@ standard_repository:
 metadata_repository:
   db_nm: db_standard
   project_schema_nm: db_standard
+  definition_create_mode: use_existing # create | use_existing
+  bootstrap_policy:
+    standardization_applied: false
+    web_search_allowed: false
+    physical_name_generation: bootstrap_role_mapping_then_snake_case
+    column_data_type: text
+    comment_source: korean_name
+    role_mapping_mode: reference_first
   table_definition:
+    korean_table_name:
+    physical_table_name:
+    korean_columns:
     table_nm:
     pk_strategy:
     id_sequence:
@@ -45,6 +62,9 @@ metadata_repository:
       related_entity_name:
       description:
   column_definition:
+    korean_table_name:
+    physical_table_name:
+    korean_columns:
     table_nm:
     pk_strategy:
     id_sequence:
@@ -78,13 +98,14 @@ physical_target:
       subject_area_nms:
       owner_codes:
 
-# Run control
-run_mode: preview              # preview | approval | execute
-catalog_lookup_mode: unavailable  # live | provided_results | unavailable
-write_execution_enabled: false
+run_control:
+  run_mode: preview # preview | approval | execute
+  catalog_lookup_mode: unavailable # live | provided_results | unavailable
+  write_execution_enabled: false
 
-# Optional project policies
-identifier_case_policy: auto
-sequence_naming_policy: SEQ_<TABLE_NAME>
-owner_resolution_mode: direct  # direct | word_dictionary | project_mapping
-namespace_routing_key: table_owner # table_owner | subject_area_cd | project_mapping
+optional_policies:
+  identifier_case_policy: auto
+  sequence_naming_policy: SEQ_<TABLE_NAME>
+  owner_resolution_mode: direct # direct | word_dictionary | project_mapping
+  default_target_namespace_nm:
+  namespace_routing_key: table_owner # table_owner | subject_area_cd | project_mapping

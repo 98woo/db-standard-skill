@@ -36,10 +36,10 @@
   표준 사전 조회 / 도메인 판단 / 웹 검색을 적용하지 않는다.
 - 신규 프로젝트 정의서 테이블 컬럼은 한글 입력을 자동 `snake_case` 물리명으로 변환하고,
   타입은 모두 `text`로 생성하며, 한글명은 comment로 남긴다.
-- 업무 대상 namespace는 `target_namespace_map`으로 관리하고,
+- 업무 대상 namespace는 `physical_target.target_namespace_map`으로 관리하고,
   주제영역 / 소유자 코드에 따라 요청마다 하나의 `target_namespace_nm`을 확정한다.
-- `target_namespace_map`은 최초 1회 입력받으며, namespace가 하나여도 `namespace(subject)` 형식을 사용한다.
-- 정의서 namespace(`meta_schema_nm`)와 업무 대상 namespace(`target_namespace_nm`)를 혼동하지 않는다.
+- `physical_target.target_namespace_map`은 최초 1회 입력받으며, namespace가 하나여도 `namespace(subject)` 형식을 사용한다.
+- 정의서 namespace(`metadata_repository.project_schema_nm`)와 업무 대상 namespace(`target_namespace_nm`)를 혼동하지 않는다.
 - 테이블 정의서에는 `target_schema` 역할 컬럼이 필수다.
 
 ### 3.2 논리 식별자 생성 후 DBMS별 렌더링

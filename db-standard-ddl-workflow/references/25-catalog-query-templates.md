@@ -19,10 +19,35 @@
 
 - 표준 사전은 항상 DBMS profile이 정한 `db_standard` 표준 저장소의 `db_standard` namespace에 있다고 가정한다.
 - 프로젝트 정의서는 DBMS profile이 정한 `db_standard` 표준 저장소 namespace에 있다고 가정한다.
+- 이 문서의 SQL 블록은 logical template이다. 최종 출력 시 `references/11-dbms-profile.md`와 `references/80-dbms-dialects.md`에 따라 DBMS별 object identifier pattern, casing, bind marker를 적용한다.
 - 모든 테이블은 Execution Context의 전체 식별자를 사용한다.
 - 바인드 변수 표기는 generic `:param` 형식을 사용한다.
 - string concatenation은 DBMS마다 다를 수 있으므로, LIKE 검색은 미리 조합된 `:like_pattern` 으로 바인딩하는 것을 권장한다.
 - exact match가 synonym / prohibited-word 검색보다 항상 우선한다.
+
+DBMS별 표준 단어 exact 조회 렌더링 예시:
+
+```sql
+-- PostgreSQL, connected to database db_standard
+SELECT word_nm, word_eng_abbr_nm
+FROM db_standard.tb_db_com_std_word
+WHERE word_nm = :word_nm;
+
+-- Oracle
+SELECT WORD_NM, WORD_ENG_ABBR_NM
+FROM DB_STANDARD.TB_DB_COM_STD_WORD
+WHERE WORD_NM = :word_nm;
+
+-- MySQL / MariaDB
+SELECT word_nm, word_eng_abbr_nm
+FROM db_standard.tb_db_com_std_word
+WHERE word_nm = :word_nm;
+
+-- SQL Server
+SELECT word_nm, word_eng_abbr_nm
+FROM db_standard.tb_db_com_std_word
+WHERE word_nm = @word_nm;
+```
 
 ## 1. 표준 단어 exact 조회
 
