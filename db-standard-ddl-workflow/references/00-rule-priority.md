@@ -48,12 +48,13 @@
 
 ### 3.3 exact match 우선
 - word / term exact match를 가장 먼저 시도한다.
-- 그 다음 synonym / prohibited-word 검색을 한다.
-- synonym / prohibited-word 결과가 2건 이상이면 임의 확정 금지
+- 컬럼명은 term exact miss 시 term synonym을 먼저 확인한 뒤 단어 분해로 내려간다.
+- 단어 분해 후에는 word exact miss 단어에 대해서만 word synonym / prohibited-word 검색을 한다.
+- term synonym / word synonym / prohibited-word 결과가 2건 이상이면 임의 확정 금지
 
 ### 3.4 표준 사전 재사용 우선
 - 신규 단어 / 신규 용어 등록은 최후 수단이다.
-- 신규 등록 전에 기존 용어 exact, 기존 단어 exact, synonym, prohibited-word를 반드시 확인한다.
+- 신규 등록 전에 기존 용어 exact, 기존 용어 synonym, 기존 단어 exact, 기존 단어 synonym, prohibited-word를 반드시 확인한다.
 - 기존 사전에 재사용 가능한 canonical 값이 있으면 신규 등록보다 재사용을 우선한다.
 - 재사용 후보가 2건 이상이면 임의 선택하지 않고 pending decision으로 돌린다.
 - 단일 재사용 후보가 있는데 사용자가 이를 거부하면 신규 등록으로 우회하지 않고 pending decision으로 돌린다.

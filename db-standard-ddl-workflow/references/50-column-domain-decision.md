@@ -6,7 +6,7 @@
 
 - [1. 컬럼 입력 공통 규칙](#1-컬럼-입력-공통-규칙)
 - [2. 처리 순서](#2-처리-순서)
-- [3. 용어 DB(trm) 선조회](#3-용어-dbtrm-선조회)
+- [3. 용어 DB(trm) exact / synonym 선조회](#3-용어-dbtrm-exact--synonym-선조회)
 - [4. 용어 miss 시 단어 분해](#4-용어-miss-시-단어-분해)
 - [5. 마지막 단어 도메인 판단 규칙](#5-마지막-단어-도메인-판단-규칙)
 - [6. 도메인 선택 절차](#6-도메인-선택-절차)
@@ -31,13 +31,15 @@
 
 1. raw 한글 컬럼명 확보
 2. 공백 제거한 문자열로 **term exact lookup**
-3. term hit면 즉시 확정하고 종료
-4. term miss면 단어 분해
-5. 각 단어 정규화 / canonicalization
-6. 마지막 단어 도메인 판단
-7. 영문 컬럼명 조합
-8. 필요 시 신규 도메인 / 신규 단어 / 신규 용어 INSERT preview 생성
-9. 컬럼 정의서 INSERT preview 생성
+3. term exact hit면 즉시 확정하고 종료
+4. term exact miss면 **term synonym lookup**
+5. term synonym 단일 hit면 canonical term으로 확정하고 종료
+6. term exact / synonym 모두 miss면 단어 분해
+7. 각 단어 정규화 / canonicalization
+8. 마지막 단어 도메인 판단
+9. 영문 컬럼명 조합
+10. 필요 시 신규 도메인 / 신규 단어 / 신규 용어 INSERT preview 생성
+11. 컬럼 정의서 INSERT preview 생성
 
 ## 2.1 컬럼명 재사용 우선
 
@@ -47,43 +49,69 @@
 
 1. 공백 제거한 컬럼명으로 용어 exact lookup
 2. 용어 hit 시 `trm_eng_abbr_nm`, `dmn_nm`을 그대로 재사용하고 단어 분해를 중단
-3. 용어 miss 시 단어 분해
-4. 각 단어 exact lookup
-5. exact miss 단어에 대해서만 synonym / prohibited-word lookup
-6. 단일 canonical 후보가 있으면 canonical `word_nm`, `word_eng_abbr_nm` 재사용
-7. 재사용 후보가 없을 때만 신규 단어 / 신규 용어 등록 검토
+3. 용어 exact miss 시 용어 synonym lookup
+4. 용어 synonym 단일 hit 시 canonical `trm_nm`, `trm_eng_abbr_nm`, `dmn_nm`을 재사용하고 단어 분해를 중단
+5. 용어 exact / synonym 모두 miss 시 단어 분해
+6. 각 단어 exact lookup
+7. exact miss 단어에 대해서만 word synonym / prohibited-word lookup
+8. 단일 canonical 후보가 있으면 canonical `word_nm`, `word_eng_abbr_nm` 재사용
+9. 재사용 후보가 없을 때만 신규 단어 / 신규 용어 등록 검토
 
 적용 원칙:
 
 - 기존 용어가 있으면 신규 용어를 등록하지 않는다.
+- 용어 synonym으로 재사용 가능한 canonical 용어가 있으면 신규 용어를 등록하지 않는다.
 - existing word exact / synonym / prohibited-word로 재사용 가능한 단어가 있으면 신규 단어를 등록하지 않는다.
-- synonym / prohibited-word 매칭은 원 입력을 유지하지 않고 canonical `word_nm`으로 치환한다.
+- term synonym 매칭은 원 입력을 유지하지 않고 canonical `trm_nm`으로 치환한다.
+- word synonym / prohibited-word 매칭은 원 입력을 유지하지 않고 canonical `word_nm`으로 치환한다.
 - 후보가 2건 이상이면 임의 확정하지 않고 pending decision으로 돌린다.
 - 단일 canonical 후보를 사용자 선호만으로 거부하면 신규 등록으로 우회하지 않고 pending decision으로 돌린다.
 - live lookup 없이 약어, 도메인, 재사용 후보를 추측하지 않는다.
 
-## 3. 용어 DB(trm) 선조회
+## 3. 용어 DB(trm) exact / synonym 선조회
 
-### 3.1 조회 방식
+### 3.1 exact 조회 방식
 설계자 입력 컬럼명에서 모든 공백을 제거한 후 exact lookup 한다.
 
 ```sql
 SELECT
+  trm_nm,
   trm_eng_abbr_nm,
   dmn_nm
 FROM db_standard.tb_db_com_std_trm
 WHERE trm_nm = :column_nm;
 ```
 
-### 3.2 조회 성공 시
+### 3.2 exact 조회 성공 시
 - `trm_eng_abbr_nm` -> 영문 컬럼명
 - `dmn_nm` -> 최종 도메인명
 - 도메인 테이블에서 타입 / 길이 조회
 - 단어 분해 로직을 수행하지 않는다.
 - 신규 용어 등록도 수행하지 않는다.
 
+### 3.3 exact 조회 실패 시 synonym 조회
+
+term exact miss인 경우에만 `synm_list_expln`을 조회한다.
+
+```sql
+SELECT
+  trm_nm,
+  trm_eng_abbr_nm,
+  dmn_nm,
+  synm_list_expln
+FROM db_standard.tb_db_com_std_trm
+WHERE synm_list_expln LIKE :like_pattern;
+```
+
+적용 원칙:
+- `synm_list_expln`을 delimiter 기준으로 분리하고 trim한 뒤 공백 제거 등 동일 정규화를 적용해 전체 토큰이 입력 컬럼명과 일치하는지 확인한다.
+- 단일 canonical term 후보만 확인되면 `trm_nm`, `trm_eng_abbr_nm`, `dmn_nm`을 재사용한다.
+- 이 경우 단어 분해, 마지막 단어 도메인 판단, 신규 용어 등록을 수행하지 않는다.
+- 후보가 2건 이상이면 pending decision으로 돌리고 임의 확정하지 않는다.
+
 ## 4. 용어 miss 시 단어 분해
 
+- 용어 exact / synonym 모두 miss인 경우에만 수행한다.
 - 공백 기준으로 단어 분해
 - 필요 시 `references/30-normalization-rules.md`의 복합어 정규화 적용
 - 각 단어는 word exact -> synonym -> prohibited 순으로 조회
@@ -167,10 +195,10 @@ WHERE trm_nm = :column_nm;
 
 ## 8. 영문 컬럼명 생성 규칙
 
-### 8.1 term hit
+### 8.1 term exact / synonym hit
 - `trm_eng_abbr_nm` 그대로 사용
 
-### 8.2 term miss + 단어 조합
+### 8.2 term exact / synonym miss + 단어 조합
 - 각 canonical word의 `word_eng_abbr_nm` 을 `_` 로 연결
 - 공간정보 컬럼은 예외로 `geom`
 
@@ -230,11 +258,12 @@ UNIQUE, INDEX, DEFAULT, CHECK, 개인정보, 암호화, 공개 여부 같은 추
 
 ## 11. 신규 용어 등록 규칙
 
-term hit가 아니고 최종 컬럼명이 신규 생성된 경우,
+term exact / synonym hit가 아니고 최종 컬럼명이 신규 생성된 경우,
 `db_standard.tb_db_com_std_trm` INSERT preview를 생성할 수 있다.
 
 전제:
 - 용어 exact lookup 결과가 없어야 한다.
+- 용어 synonym lookup 결과 재사용 가능한 단일 canonical term 후보가 없어야 한다.
 - 단어 exact / synonym / prohibited-word 조회와 도메인 판단이 완료되어야 한다.
 - 기존 용어 또는 기존 단어 조합으로 재사용 가능한 후보가 있으면 신규 용어 등록보다 재사용을 우선한다.
 - 단일 재사용 후보를 거부하려면 표준 사전 관리자 승인 또는 프로젝트 표준 정책 근거가 필요하다.

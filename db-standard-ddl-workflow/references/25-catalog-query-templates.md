@@ -8,6 +8,7 @@
 - [1. 표준 단어 exact 조회](#1-표준-단어-exact-조회)
 - [2. synonym / prohibited-word 조회](#2-synonym--prohibited-word-조회)
 - [3. 표준 용어 exact 조회](#3-표준-용어-exact-조회)
+- [3.1 표준 용어 synonym 조회](#31-표준-용어-synonym-조회)
 - [4. 도메인 분류 조회](#4-도메인-분류-조회)
 - [5. 신규 도메인 등록 전 유사 후보 조회](#5-신규-도메인-등록-전-유사-후보-조회)
 - [6. 테이블 정의서 중복 확인](#6-테이블-정의서-중복-확인)
@@ -24,6 +25,8 @@
 - 바인드 변수 표기는 generic `:param` 형식을 사용한다.
 - string concatenation은 DBMS마다 다를 수 있으므로, LIKE 검색은 미리 조합된 `:like_pattern` 으로 바인딩하는 것을 권장한다.
 - exact match가 synonym / prohibited-word 검색보다 항상 우선한다.
+- 컬럼명은 term exact miss 시 term synonym 조회를 수행하고, term synonym도 miss일 때만 단어 분해로 내려간다.
+- LIKE 기반 synonym 조회 결과는 후보 탐색용이다. 자동 재사용은 delimiter-aware token 비교로 정규화된 전체 토큰이 입력값과 일치할 때만 허용한다.
 
 DBMS별 표준 단어 exact 조회 렌더링 예시:
 
@@ -85,11 +88,32 @@ WHERE synm_list_expln LIKE :like_pattern
 
 ```sql
 SELECT
+  trm_nm,
   trm_eng_abbr_nm,
   dmn_nm
 FROM db_standard.tb_db_com_std_trm
 WHERE trm_nm = :trm_nm;
 ```
+
+## 3.1 표준 용어 synonym 조회
+
+term exact 조회가 실패한 경우에만 수행한다.
+
+```sql
+SELECT
+  trm_nm,
+  trm_eng_abbr_nm,
+  dmn_nm,
+  synm_list_expln
+FROM db_standard.tb_db_com_std_trm
+WHERE synm_list_expln LIKE :like_pattern;
+```
+
+권장:
+- `:like_pattern = '%용어%'`
+- `synm_list_expln`을 쉼표 등 delimiter 기준으로 분리하고 trim한 뒤, 공백 제거 등 동일한 정규화를 적용해 `:trm_nm`과 전체 토큰 일치 여부를 확인한다.
+- 단일 canonical `trm_nm` 후보만 확인되면 `trm_nm`, `trm_eng_abbr_nm`, `dmn_nm`을 재사용하고 단어 분해를 수행하지 않는다.
+- 후보가 2건 이상이면 pending decision으로 돌리고 임의 확정하지 않는다.
 
 ## 4. 도메인명으로 상세 조회
 

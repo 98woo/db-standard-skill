@@ -212,7 +212,7 @@ INSERT INTO db_standard.tb_db_com_std_word (
 ## 8. 신규 용어 INSERT preview 템플릿
 
 신규 용어 INSERT도 표준사전 보완 작업이다.
-term exact lookup이 실패했고, 단어 / 도메인 판단으로 최종 용어가 확정된 경우에만 preview로 제시한다.
+term exact lookup과 term synonym lookup이 모두 실패했고, 단어 / 도메인 판단으로 최종 용어가 확정된 경우에만 preview로 제시한다.
 승인 전에는 물리 DDL 실행 bundle에 포함하지 않는다.
 
 ```sql

@@ -158,14 +158,15 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
 5. **컬럼 목록 순회**
    각 컬럼에 대해 아래 순서를 강제한다.
 
-   1) 용어 DB(trm) 선조회  
-   2) 용어 조회 실패 시 단어 분해  
-   3) 각 단어 정규화 및 표준 단어 조회  
-   4) 마지막 단어 도메인 판단  
-   5) exact / synonym / prohibited-word 결과에서 재사용 가능한 후보가 있으면 신규 등록보다 재사용  
-   6) 필요 시 신규 도메인 / 신규 단어 / 신규 용어 INSERT preview 생성. 단, 명시 승인 전 실행 bundle에는 포함하지 않음  
-   7) 컬럼 정의서 INSERT preview 생성  
-   8) 물리 컬럼명 / 데이터 타입 / 길이 / 제약조건 확정
+   1) 용어 DB(trm) exact 선조회  
+   2) 용어 exact miss 시 용어 synonym 조회  
+   3) 용어 exact / synonym 모두 miss 시 단어 분해  
+   4) 각 단어 정규화 및 표준 단어 조회  
+   5) 마지막 단어 도메인 판단  
+   6) term exact / term synonym / word exact / word synonym / prohibited-word 결과에서 재사용 가능한 후보가 있으면 신규 등록보다 재사용  
+   7) 필요 시 신규 도메인 / 신규 단어 / 신규 용어 INSERT preview 생성. 단, 명시 승인 전 실행 bundle에는 포함하지 않음  
+   8) 컬럼 정의서 INSERT preview 생성  
+   9) 물리 컬럼명 / 데이터 타입 / 길이 / 제약조건 확정
 
 6. **마지막 단어 도메인 판단**
    - 마지막 단어만 도메인 판단 대상이다.
@@ -206,11 +207,11 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
 
 - 표준 사전 조회가 불가능한데도 약어명이나 도메인을 **추측하지 않는다**.
 - 신규 도메인 등록 전에 기존 도메인 exact / 유사 후보를 조회하고 재사용 가능성을 먼저 판단한다.
-- 신규 단어 / 신규 용어 등록은 exact / synonym / prohibited-word 재사용 후보가 없을 때만 진행한다.
+- 신규 단어 / 신규 용어 등록은 term exact / term synonym / word exact / word synonym / prohibited-word 재사용 후보가 없을 때만 진행한다.
 - 단일 재사용 후보가 있는데 사용자 선호만으로 신규 등록하거나 canonical 후보를 우회하지 않는다.
 - 재사용 후보 거부는 표준 사전 관리자 승인 또는 프로젝트 표준 정책 근거가 있을 때만 재검토한다.
-- synonym / prohibited-word 매칭 결과가 둘 이상이면 **단일 결과로 임의 확정하지 않는다**.
-- 최종 한글 테이블명 / 컬럼명은 canonical `word_nm` 기준으로 확정한다.
+- term synonym / word synonym / prohibited-word 매칭 결과가 둘 이상이면 **단일 결과로 임의 확정하지 않는다**.
+- 최종 한글 테이블명 / 컬럼명은 canonical `trm_nm` 또는 canonical `word_nm` 기준으로 확정한다.
 - 모든 SQL은 DBMS profile에 맞는 namespace 포함 전체 식별자를 사용한다.
 - 실제 DB 실행 대신 preview를 반환할 때는, 실행 불가 이유를 명시한다.
 - `references/90-output-contract.md` 형식을 따른다.

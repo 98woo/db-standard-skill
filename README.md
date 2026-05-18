@@ -313,8 +313,8 @@ Execution Context가 없으면 에이전트는 업무 테이블 DDL부터 만들
 
 ```text
 target namespaces:
-- gygo_cli(scc)
-- gygo_fld(suo)
+- service_core(dom)
+- service_field(ops)
 ```
 
 ### 7.2 신규 프로젝트 사용자

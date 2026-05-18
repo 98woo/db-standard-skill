@@ -58,7 +58,7 @@
 - 표준 사전 조회 없이 도메인을 추측해야 하는 상황
 - 표준 사전 조회 없이 재사용 후보 유무를 판단해야 하는 상황
 - 기존 도메인 exact / 유사 후보 조회 없이 신규 도메인 등록을 진행하려는 상황
-- 재사용 후보 확인 없이 신규 단어 / 신규 용어 등록을 진행하려는 상황
+- term exact / term synonym / word exact / word synonym / prohibited-word 재사용 후보 확인 없이 신규 단어 / 신규 용어 등록을 진행하려는 상황
 
 ### 2.6 요청 / context 불일치
 - 요청 `데이터베이스` != context `physical_target.db_nm`
@@ -70,7 +70,7 @@
 
 ## 3. PENDING_DECISION 조건
 
-- synonym / prohibited-word 다중 매칭
+- term synonym / word synonym / prohibited-word 다중 매칭
 - 단일 재사용 후보를 사용자가 거부했지만 표준 사전 관리자 승인 또는 프로젝트 표준 정책 근거가 없음
 - 신규 도메인 등록이 필요하지만 표준 사전 관리자 승인 또는 프로젝트 표준 정책 근거가 없음
 - 테이블명 4단어 이상으로 조합 승인 필요
