@@ -44,7 +44,7 @@ project: # project(프로젝트 정보)
   project_nm: # project_nm(프로젝트 명)
 
 dbms: # dbms(DBMS 정보)
-  type: postgresql # type(DBMS 종류): postgresql | oracle | mysql | mariadb | sqlserver
+  type: # type(DBMS 종류): postgresql | oracle | mysql | mariadb | sqlserver
   version: # version(DBMS 버전). 모르면 비워둘 수 있음
   connection_target: # connection_target(접속 대상): Oracle service/PDB, SQL Server server/instance 등. 없으면 비움
   profile: auto # profile(DBMS 프로파일): auto 권장. 필요 시 postgresql | oracle | mysql | mariadb | sqlserver

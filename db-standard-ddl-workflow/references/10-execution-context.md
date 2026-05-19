@@ -11,9 +11,15 @@ Execution Context는 사용자가 매 요청마다 반복 입력하지 않아도
 
 일반 업무 테이블 표준화는 `finalized execution context`가 있어야 진행할 수 있다.
 
+`finalized execution context`는 가능하면 현재 작업 디렉토리의
+`db-standard-execution-context.yaml`로 저장한다.
+이 파일은 사용자가 직접 처음부터 작성하는 입력 파일이 아니라,
+에이전트가 initial context와 DB 조회 / 검증 결과를 바탕으로 생성하는 프로젝트별 산출물이다.
+
 ## 목차
 
 - [1. 핵심 원칙](#1-핵심-원칙)
+- [1.1 Context 파일 수명주기](#11-context-파일-수명주기)
 - [2. initial context 필수 필드](#2-initial-context-필수-필드)
 - [3. finalized execution context 필수 필드](#3-finalized-execution-context-필수-필드)
 - [4. 선택 필드](#4-선택-필드)
@@ -31,6 +37,39 @@ Execution Context는 사용자가 매 요청마다 반복 입력하지 않아도
 - `finalized execution context`는 일반 업무 테이블 표준화 중 read-only 기준으로 사용한다.
 - 확정 후 값 변경이 필요하면 기존 Context를 임의 수정하지 말고 시작 온보딩으로 돌아가 재확정한다.
 - Context가 없으면 일반 업무 테이블 표준화 단계로 절대 진행하지 않는다.
+
+## 1.1 Context 파일 수명주기
+
+skill에 포함되는 원본 템플릿:
+
+```text
+db-standard-ddl-workflow/assets/initial-context-new-project.template.md
+db-standard-ddl-workflow/assets/initial-context-existing-project.template.md
+db-standard-ddl-workflow/assets/execution-context.template.yaml
+```
+
+사용자 작업 디렉토리에 생성되는 파일:
+
+```text
+db-standard-initial-context.new.md
+db-standard-initial-context.existing.md
+db-standard-execution-context.yaml
+```
+
+역할:
+- `db-standard-initial-context.new.md`와 `db-standard-initial-context.existing.md`는 에이전트가 템플릿을 복제하고 사용자가 작성하는 입력 파일이다.
+- `db-standard-execution-context.yaml`은 에이전트가 생성 / 갱신하는 확정 실행 컨텍스트 파일이다.
+- 다음 세션 또는 다른 에이전트는 `db-standard-execution-context.yaml`을 먼저 확인한다.
+- 이 파일이 유효하면 initial context 파일을 다시 요구하지 않는다.
+- 이 파일이 없거나 불완전하면 initial context 파일을 확인하고, 그것도 없으면 시작 온보딩으로 돌아간다.
+- 이 파일이 없다는 사실은 신규 프로젝트라는 뜻이 아니다. 기존 프로젝트에 새로 합류한 사용자도 로컬 작업 디렉토리에 이 파일이 없을 수 있다.
+
+관리 규칙:
+- `db-standard-execution-context.yaml`은 사용자별 / 프로젝트별 환경 산출물이므로 skill repository에 포함하지 않는다.
+- 기본적으로 사용자 프로젝트의 gitignore에 추가하는 것을 권장한다.
+- 파일에는 비밀번호, API key, 개인 계정, 로컬 절대경로를 저장하지 않는다.
+- DB connection target은 조직 정책에 따라 placeholder 또는 환경 변수 참조로 저장할 수 있다.
+- 파일을 갱신할 때는 기존 파일을 임의 덮어쓰지 말고 변경 요약과 사용자 확인을 먼저 거친다.
 
 ## 2. initial context 필수 필드
 

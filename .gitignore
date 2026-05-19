@@ -50,5 +50,9 @@ scratch/
 tmp/
 temp/
 
+# DB Standard workflow generated context files
+db-standard-initial-context.*.md
+db-standard-execution-context.yaml
+
 # Source reference material not intended for release
 docs/original/

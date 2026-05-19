@@ -4,15 +4,110 @@
 
 이 repository의 이름은 `db-standard-skill`이다. 실제 Codex runtime에 설치하는 대상은 내부의 `db-standard-ddl-workflow/` 폴더 하나다.
 
+## 에이전트별 빠른 설치
+
+아래 예시는 repository가 GitHub에 `https://github.com/<owner>/db-standard-skill`로 공개되어 있다는 전제다.
+`<owner>`는 실제 GitHub owner 또는 organization으로 바꾼다.
+
+### Codex
+
+Codex에서는 `db-standard-ddl-workflow/` 폴더를 그대로 skill로 설치한다.
+
+```text
+$skill-installer install https://github.com/<owner>/db-standard-skill/tree/main/db-standard-ddl-workflow
+```
+
+`skill-installer`를 사용할 수 없으면 수동으로 복사한다.
+
+```powershell
+git clone https://github.com/<owner>/db-standard-skill.git
+Copy-Item -Recurse -Force .\db-standard-skill\db-standard-ddl-workflow "$env:USERPROFILE\.codex\skills\db-standard-ddl-workflow"
+```
+
+호출:
+
+```text
+$db-standard-ddl-workflow
+```
+
+설치 후 새 skill을 인식하려면 Codex를 재시작해야 할 수 있다.
+
+### Claude Code
+
+Claude Code도 `SKILL.md` 기반 skill을 지원하므로 같은 폴더를 Claude skill 경로에 복사한다.
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/<owner>/db-standard-skill.git
+Copy-Item -Recurse -Force .\db-standard-skill\db-standard-ddl-workflow "$env:USERPROFILE\.claude\skills\db-standard-ddl-workflow"
+```
+
+macOS / Linux:
+
+```bash
+git clone https://github.com/<owner>/db-standard-skill.git
+mkdir -p ~/.claude/skills
+cp -R db-standard-skill/db-standard-ddl-workflow ~/.claude/skills/db-standard-ddl-workflow
+```
+
+프로젝트 단위로만 쓰려면 아래 위치에 둔다.
+
+```text
+<project-root>/.claude/skills/db-standard-ddl-workflow/
+```
+
+호출:
+
+```text
+/db-standard-ddl-workflow
+```
+
+주의: `agents/openai.yaml`의 `allow_implicit_invocation`은 Codex용 metadata다.
+Claude Code에서 동일한 명시 호출 정책을 강제하려면 Claude용 배포본의 `SKILL.md` frontmatter에 `disable-model-invocation: true` 추가를 검토한다.
+
+### Gemini CLI
+
+Gemini CLI에서는 Agent Skill로 설치한다.
+
+사용자 전역 설치:
+
+```bash
+gemini skills install https://github.com/<owner>/db-standard-skill.git --path db-standard-ddl-workflow --scope user
+```
+
+프로젝트 단위 설치:
+
+```bash
+gemini skills install https://github.com/<owner>/db-standard-skill.git --path db-standard-ddl-workflow --scope workspace
+```
+
+로컬 clone에서 설치:
+
+```bash
+git clone https://github.com/<owner>/db-standard-skill.git
+gemini skills install ./db-standard-skill/db-standard-ddl-workflow --scope user
+```
+
+확인:
+
+```text
+/skills list
+/skills reload
+```
+
+Gemini CLI에서 MCP 서버, custom commands, hooks, policies까지 함께 배포해야 하면 단일 skill이 아니라 `gemini-extension.json`을 포함한 Gemini extension 패키지로 별도 래핑한다.
+
 ## 목차
 
+- [에이전트별 빠른 설치](#에이전트별-빠른-설치)
 - [1. 무엇을 하는 skill인가](#1-무엇을-하는-skill인가)
 - [2. 디렉토리 구조](#2-디렉토리-구조)
 - [3. 고정 전제](#3-고정-전제)
 - [4. 설치 방법](#4-설치-방법)
 - [5. 설치 검증](#5-설치-검증)
 - [6. 사용 방법](#6-사용-방법)
-- [7. 최초 실행 입력](#7-최초-실행-입력)
+- [7. 사용자 유형별 사용 방법](#7-사용자-유형별-사용-방법)
 - [8. 표준화 작업 흐름](#8-표준화-작업-흐름)
 - [9. DBMS별 namespace 의미](#9-dbms별-namespace-의미)
 - [10. 실행 안전 규칙](#10-실행-안전-규칙)
@@ -256,7 +351,9 @@ $script | python -
 $db-standard-ddl-workflow
 ```
 
-정상이라면 에이전트가 먼저 DBMS와 신규/기존 작업 여부를 묻는다.
+정상이라면 에이전트가 먼저 현재 작업 디렉토리의 `db-standard-execution-context.yaml`을 확인한다.
+없거나 불완전하면 신규/기존 작업 여부를 먼저 묻고, 필요한 경우에만 DBMS 정보를 묻는다.
+단, 이 파일이 없다는 사실만으로 신규 프로젝트라고 판단하지 않는다.
 
 ## 6. 사용 방법
 
@@ -285,41 +382,46 @@ $db-standard-ddl-workflow
 
 Execution Context가 없으면 에이전트는 업무 테이블 DDL부터 만들지 않는다. 먼저 아래를 진행해야 한다.
 
-1. DBMS 종류와 버전 확인
-2. 신규 프로젝트인지 기존 프로젝트 이어서 진행인지 확인
-3. 현재 작업 디렉토리에 작성용 Markdown 템플릿 생성
-4. 사용자가 템플릿 작성
-5. YAML 파싱
-6. 표준 사전 / 정의서 / target namespace 검증
-7. Execution Context 확정
-8. 업무 테이블 표준화 진행
+1. 현재 작업 디렉토리의 `db-standard-execution-context.yaml` 확인
+2. 없거나 불완전하면 신규 프로젝트인지 기존 프로젝트 이어서 진행인지 먼저 확인
+3. 신규 프로젝트이면 DBMS 종류와 버전 확인
+4. 기존 프로젝트이면 기존 context, 초기 입력 파일, 또는 DB 조회로 DBMS profile 복원 시도
+5. 기존 프로젝트에서 복원할 수 없을 때만 DBMS 종류와 버전 확인
+6. 현재 작업 디렉토리에 작성용 Markdown 템플릿 생성
+7. 사용자가 템플릿 작성
+8. YAML 파싱
+9. 표준 사전 / 정의서 / target namespace 검증
+10. 에이전트가 `db-standard-execution-context.yaml` 생성 또는 갱신
+11. Execution Context 확정
+12. 업무 테이블 표준화 진행
 
-## 7. 최초 실행 입력
+`db-standard-execution-context.yaml` 부재는 신규 프로젝트 판정 기준이 아니다.
+기존 프로젝트에 새로 합류한 사용자도 로컬 작업 디렉토리에 이 파일이 없을 수 있다.
 
-### 7.1 공통 입력
+## 7. 사용자 유형별 사용 방법
 
-모든 사용자는 최초에 아래 정보를 제공해야 한다.
+### 7.1 공통 전제
 
-- DBMS 종류: `postgresql`, `oracle`, `mysql`, `mariadb`, `sqlserver`
-- DBMS 버전
-- DB connection target
-- 실제 업무 테이블 대상 database
-- 실제 업무 테이블 대상 namespace와 주제영역 / 소유자 코드 매핑
-- 실행 모드: `preview`, `approval`, `execute`
+모든 사용자는 아래 전제를 공유한다.
 
-대상 namespace가 하나뿐이어도 주제영역 매핑은 입력해야 한다.
+- 표준 단어 / 용어 / 도메인 사전은 `db_standard` 표준 저장소에 미리 구축되어 있어야 한다.
+- 테이블 정의서 / 컬럼 정의서 산출물도 `db_standard` 표준 저장소의 프로젝트 산출물 namespace에 둔다.
+- 실제 업무 테이블은 `physical_target.db_nm`과 `physical_target.target_namespace_map`에 따라 생성한다.
+- 대상 namespace가 하나뿐이어도 namespace와 주제영역 / 소유자 코드 매핑은 필요하다.
+- 비밀번호, API key, 개인 계정, 로컬 절대경로는 입력 파일과 execution context에 저장하지 않는다.
 
-예:
+초기 분기 규칙:
 
-```text
-target namespaces:
-- service_core(dom)
-- service_field(ops)
-```
+- 에이전트는 항상 현재 작업 디렉토리의 `db-standard-execution-context.yaml`을 먼저 확인한다.
+- 파일이 유효하면 해당 파일을 로드하고 요약을 사용자에게 확인한 뒤 업무 테이블 표준화를 진행한다.
+- 파일이 없거나 불완전하면 먼저 신규 프로젝트인지 기존 프로젝트 이어서 진행인지 묻는다.
+- 신규 프로젝트는 DBMS 종류와 버전을 반드시 입력받는다.
+- 기존 프로젝트는 기존 context, 기존 initial context, 또는 실제 DB 조회로 DBMS profile 복원을 먼저 시도한다.
+- 기존 프로젝트에서 복원할 수 없을 때만 DBMS 종류와 버전을 입력받는다.
 
-### 7.2 신규 프로젝트 사용자
+### 7.2 신규 프로젝트 최초 세팅 사용자
 
-신규 프로젝트 사용자는 표준 사전은 이미 구축되어 있지만, 테이블 정의서 / 컬럼 정의서 테이블 구조를 새로 정하는 사용자다.
+신규 프로젝트 최초 세팅 사용자는 표준 사전은 이미 있지만, 해당 프로젝트의 테이블 정의서 / 컬럼 정의서 구조를 새로 정하는 사용자다.
 
 에이전트는 아래 템플릿을 현재 작업 디렉토리에 생성한다.
 
@@ -331,7 +433,7 @@ db-standard-initial-context.new.md
 
 - 프로젝트 ID
 - 프로젝트 명
-- DBMS 정보
+- DBMS 종류와 버전
 - 대상 database / namespace map
 - 테이블 정의서 한글 테이블명
 - 테이블 정의서 한글 컬럼 목록
@@ -348,27 +450,142 @@ db-standard-initial-context.new.md
 - 정의서 테이블 컬럼 타입은 모두 `text`로 만든다.
 - 한글명은 DB comment로 남긴다.
 
-### 7.3 기존 프로젝트 사용자
+검증과 정의서 bootstrap이 끝나면 에이전트는 현재 작업 디렉토리에 아래 파일을 생성하거나 갱신한다.
 
-기존 프로젝트 사용자는 이미 정의서와 일부 표준화 결과가 존재하는 프로젝트에 합류하는 사용자다.
+```text
+db-standard-execution-context.yaml
+```
 
-에이전트는 아래 템플릿을 현재 작업 디렉토리에 생성한다.
+### 7.3 기존 프로젝트에 새로 합류한 사용자
+
+기존 프로젝트에 새로 합류한 사용자는 프로젝트 표준화 세팅은 이미 존재하지만, 본인 작업 디렉토리에는 `db-standard-execution-context.yaml`이 없을 수 있는 사용자다.
+
+이 경우 파일 부재를 신규 프로젝트로 해석하지 않는다. 에이전트는 기존 프로젝트 이어서 진행으로 분기하고 아래 템플릿을 현재 작업 디렉토리에 생성한다.
 
 ```text
 db-standard-initial-context.existing.md
 ```
 
-사용자는 이 파일에 아래를 작성한다.
+사용자는 가능한 범위에서 아래를 작성한다.
 
 - 프로젝트 ID 또는 프로젝트 명
-- DBMS 정보
+- DBMS 정보. 단, DB 조회나 기존 파일로 복원 가능하면 비워둘 수 있음
 - 대상 database / namespace map
 - 테이블 정의서 테이블명
 - 컬럼 정의서 테이블명
 - 정의서 field map, 또는 자동 추론에 필요한 정보
 - 실행 모드
 
-에이전트는 실제 DB 조회가 가능하면 정의서 컬럼 구조를 확인하고 field map을 복원한다. 자동 추론이 불가능하면 pending decision으로 사용자 확인을 요구한다.
+에이전트는 실제 DB 조회가 가능하면 정의서 컬럼 구조와 comment를 확인하고 field map을 복원한다.
+자동 추론이 불가능하거나 후보가 둘 이상이면 pending decision으로 사용자 확인을 요구한다.
+
+### 7.4 기존 프로젝트에서 계속 작업하는 사용자
+
+기존 프로젝트 계속 작업자는 현재 작업 디렉토리에 유효한 `db-standard-execution-context.yaml`이 이미 있는 사용자다.
+
+이 경우 사용자는 initial context 파일을 다시 작성하지 않아도 된다. 에이전트는 context 파일을 먼저 로드하고 아래를 확인한다.
+
+- project / DBMS / target namespace 요약
+- 표준 저장소와 사전 테이블 위치
+- 테이블 정의서 / 컬럼 정의서 field map
+- run mode와 write 실행 가능 여부
+
+요약에 문제가 없으면 바로 업무 테이블 표준화 요청을 입력하면 된다.
+
+### 7.5 표준 사전 / 정의서 관리자
+
+표준 사전 / 정의서 관리자는 `db_standard` 표준 저장소와 프로젝트 산출물 구조를 관리하는 사용자다.
+
+이 사용자는 아래를 준비하거나 승인한다.
+
+- `tb_db_com_std_word`, `tb_db_com_std_trm`, `tb_db_com_std_dmn` 사전 테이블
+- 표준 단어 / 용어 / 도메인 데이터
+- 단어 / 용어 이음동의어와 금칙어 데이터
+- 프로젝트별 테이블 정의서 / 컬럼 정의서 구조
+- 신규 단어 / 용어 / 도메인 INSERT preview의 등록 여부
+
+skill은 사전 테이블 자체를 새로 만드는 도구가 아니다. 신규 사전 항목이 필요하면 기존 항목 재사용 가능성을 먼저 검토하고, 승인 가능한 INSERT preview를 만든다.
+
+### 7.6 검토 / 승인 / 실행 담당자
+
+검토 / 승인 / 실행 담당자는 에이전트가 만든 preview를 확인하고 실제 DB write 여부를 결정하는 사용자다.
+
+확인 대상:
+
+- 표준 사전 exact / synonym / prohibited-word 조회 결과
+- 기존 단어 / 용어 / 도메인 재사용 가능성
+- 신규 사전 INSERT preview
+- 테이블 정의서 / 컬럼 정의서 INSERT preview
+- CREATE TABLE / PK / FK / INDEX / COMMENT DDL preview
+- pending decision과 blocked 사유
+
+실제 실행은 `run_control.run_mode=execute`, `run_control.write_execution_enabled=true`, 사용자 명시 승인, 실제 실행 도구가 모두 있을 때만 가능하다.
+
+### 7.7 업무 테이블 표준화 요청자
+
+업무 테이블 표준화 요청자는 context가 확정된 뒤 실제 생성 또는 변경하려는 테이블 정보를 전달하는 사용자다.
+
+사용자는 아래 정보를 전달한다.
+
+- 요청 database
+- 대상 namespace. 단, context의 namespace map으로 단일 확정 가능하면 생략 가능
+- 테이블 종류
+- 테이블 소유자
+- 주제영역 코드 또는 주제영역 명
+- 논리 테이블명
+- 컬럼 목록과 PK / NULL / FK / UNIQUE / INDEX / 기본값 조건
+- 실행 요청: `SQL만 작성`, `SQL 작성 후 승인 대기`, `실제 DB 실행`
+
+에이전트는 기존 사전 exact / synonym / prohibited-word 조회를 먼저 수행하고, 재사용 불가 항목만 신규 사전 INSERT preview 후보로 제시한다.
+
+### 7.8 읽기 전용 preview 사용자
+
+읽기 전용 preview 사용자는 DB write 권한이 없거나 SQL 검토만 필요한 사용자다.
+
+권장 설정:
+
+```yaml
+run_control:
+  run_mode: preview
+  catalog_lookup_mode: live # live 조회가 가능할 때만 사용. 아니면 provided_results 또는 unavailable
+  write_execution_enabled: false
+```
+
+이 경우 에이전트는 실제 write를 수행하지 않고 lookup SQL, pending decisions, preview SQL만 제공한다.
+
+### 7.9 다른 에이전트 / 다른 세션에서 사용하는 사용자
+
+다른 에이전트나 다른 세션에서 이어서 작업할 때는 현재 작업 디렉토리의 `db-standard-execution-context.yaml`을 먼저 확인한다.
+
+- 파일이 유효하면 해당 파일을 기준으로 이어서 진행한다.
+- 파일이 없으면 신규 프로젝트로 단정하지 말고 신규 프로젝트인지 기존 프로젝트 이어서 진행인지 사용자에게 먼저 확인한다.
+- 기존 프로젝트라면 `db-standard-initial-context.existing.md` 또는 DB 조회로 context를 복원한다.
+
+### 7.10 생성 파일 관리
+
+skill 내부에는 원본 템플릿만 포함한다.
+
+```text
+db-standard-ddl-workflow/assets/initial-context-new-project.template.md
+db-standard-ddl-workflow/assets/initial-context-existing-project.template.md
+db-standard-ddl-workflow/assets/execution-context.template.yaml
+```
+
+사용자 작업 디렉토리에는 아래 파일이 생성될 수 있다.
+
+```text
+db-standard-initial-context.new.md
+db-standard-initial-context.existing.md
+db-standard-execution-context.yaml
+```
+
+관리 원칙:
+
+- initial context Markdown은 사용자가 작성한다.
+- `db-standard-execution-context.yaml`은 에이전트가 initial context와 DB 조회 / 검증 결과로 작성한다.
+- 다음 세션 또는 다른 에이전트는 `db-standard-execution-context.yaml`을 우선 로드한다.
+- `db-standard-execution-context.yaml`에는 비밀번호, API key, 개인 계정, 로컬 절대경로를 저장하지 않는다.
+- 공개 repository에서는 `db-standard-execution-context.yaml`과 `db-standard-initial-context.*.md`를 gitignore하는 것을 권장한다.
 
 ## 8. 표준화 작업 흐름
 
@@ -451,7 +668,7 @@ GitHub에 공개할 경우 repository README에 아래를 반드시 포함한다
 - 설치 대상은 `db-standard-ddl-workflow/` 폴더라는 점
 - `docs/`와 `docs/original/`은 runtime 설치 대상이 아니라는 점
 - `db_standard` 표준 저장소와 사전 테이블은 사용자가 미리 구축해야 한다는 점
-- 최초 실행 시 DBMS와 신규/기존 작업 유형을 입력해야 한다는 점
+- 최초 실행 시 신규/기존 작업 유형을 먼저 확인하고, DBMS 정보는 신규 프로젝트 또는 복원 불가 기존 프로젝트에서만 요구한다는 점
 - 승인 없는 write는 실행하지 않는다는 점
 - Windows 검증 시 `PYTHONUTF8=1`이 필요할 수 있다는 점
 - repository에는 별도 zip 산출물을 커밋하지 않는다는 점
@@ -502,7 +719,8 @@ python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_valid
 
 ### 에이전트가 바로 DDL을 만들지 않고 질문만 함
 
-정상 동작이다. Execution Context가 없으면 DBMS, 신규/기존 작업 유형, target namespace map, 정의서 구조를 먼저 확정해야 한다.
+정상 동작이다. Execution Context가 없으면 먼저 `db-standard-execution-context.yaml` 재사용 가능 여부를 확인한다.
+없거나 불완전하면 신규/기존 작업 유형을 먼저 확정하고, 필요한 경우에만 DBMS 정보, target namespace map, 정의서 구조를 확정해야 한다.
 
 ### 표준 사전 테이블이 없다고 blocked됨
 

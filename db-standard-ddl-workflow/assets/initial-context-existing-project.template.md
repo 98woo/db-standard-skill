@@ -7,7 +7,8 @@
 작성 규칙:
 
 - 아래 YAML 블록을 작성한다.
-- `dbms.type`을 먼저 작성한다. DBMS에 따라 database / schema / owner / namespace 의미가 달라진다.
+- 기존 context, 기존 initial context, 또는 DB 조회 결과로 DBMS profile을 복원할 수 있으면 `dbms.type`은 비워둘 수 있다.
+- 복원할 수 없으면 `dbms.type`을 작성한다. DBMS에 따라 database / schema / owner / namespace 의미가 달라진다.
 - `standard_repository` 값은 고정값이므로 변경하지 않는다.
 - 대상 namespace가 하나여도 `target_namespace_map`에는 namespace와 주제영역 / 소유자 코드를 반드시 입력한다.
 - `field_map`을 알고 있으면 작성하고, 모르면 비워둔다.
@@ -18,7 +19,7 @@
 
 - `startup_mode(작업 유형)`: `existing_project`로 고정
 - `project_id(프로젝트 ID)`, `project_nm(프로젝트 명)`: 프로젝트 식별 정보
-- `dbms.type(DBMS 종류)`: `postgresql`, `oracle`, `mysql`, `mariadb`, `sqlserver` 중 하나
+- `dbms.type(DBMS 종류)`: `postgresql`, `oracle`, `mysql`, `mariadb`, `sqlserver` 중 하나. 복원 가능하면 비워둘 수 있음
 - `dbms.version(DBMS 버전)`: 모르면 비워둘 수 있음
 - `dbms.connection_target(접속 대상)`: Oracle service/PDB, SQL Server instance 등. 접속 도구가 별도 관리하면 비워둘 수 있음
 - `dbms.profile(DBMS 프로파일)`: 보통 `auto` 유지
@@ -46,7 +47,7 @@ project: # project(프로젝트 정보)
   project_nm: # project_nm(프로젝트 명)
 
 dbms: # dbms(DBMS 정보)
-  type: postgresql # type(DBMS 종류): postgresql | oracle | mysql | mariadb | sqlserver
+  type: # type(DBMS 종류): postgresql | oracle | mysql | mariadb | sqlserver. 복원 가능하면 비워둘 수 있음
   version: # version(DBMS 버전). 모르면 비워둘 수 있음
   connection_target: # connection_target(접속 대상): Oracle service/PDB, SQL Server server/instance 등. 없으면 비움
   profile: auto # profile(DBMS 프로파일): auto 권장. 필요 시 postgresql | oracle | mysql | mariadb | sqlserver

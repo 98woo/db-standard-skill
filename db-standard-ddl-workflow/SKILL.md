@@ -29,20 +29,30 @@ description: Generate standardized DDL, metadata INSERT previews, and naming dec
 ## 필수 입력
 
 ### 1. 시작 온보딩 / Execution Context
-먼저 `references/05-startup-onboarding.md`와 `references/11-dbms-profile.md`를 읽고 DBMS와 작업 유형을 확정한다.
+먼저 `references/05-startup-onboarding.md`와 `references/11-dbms-profile.md`를 읽고 작업 유형, DBMS, Execution Context를 확정한다.
 
-사용자가 작업을 최초로 실행하면 반드시 아래를 먼저 입력받는다.
+작업 시작 시 현재 작업 디렉토리의 `db-standard-execution-context.yaml`을 먼저 확인한다.
+이 파일이 있으면 우선 로드하고, 요약을 사용자에게 확인받은 뒤 일반 업무 테이블 표준화를 진행한다.
+파일이 없거나 불완전하면 시작 온보딩으로 돌아간다.
+단, 이 파일이 없다는 사실은 신규 프로젝트라는 뜻이 아니다.
+기존 프로젝트에 새로 합류한 사용자도 로컬 작업 디렉토리에 이 파일이 없을 수 있으므로,
+항상 작업 유형을 먼저 확인한다.
 
-1. 사용할 DBMS 종류와 버전
-2. 신규 프로젝트 표준화 작업 시작 또는 기존 프로젝트 표준화 작업 이어서 진행
+Execution Context가 없거나 재사용할 수 없으면 반드시 아래를 먼저 확인한다.
+
+1. 신규 프로젝트 표준화 작업 시작 또는 기존 프로젝트 표준화 작업 이어서 진행
+2. DBMS 종류와 버전. 단, 기존 프로젝트에서 기존 context나 초기 입력 파일로 복원 가능하면 재입력받지 않는다.
 
 작업 유형이 확정되면 현재 작업 디렉토리에 작성용 초기 입력 파일을 생성한다.
 
 - 신규 프로젝트: `assets/initial-context-new-project.template.md` -> `db-standard-initial-context.new.md`
 - 기존 프로젝트: `assets/initial-context-existing-project.template.md` -> `db-standard-initial-context.existing.md`
+- 확정 실행 컨텍스트: `assets/execution-context.template.yaml` -> `db-standard-execution-context.yaml`
 
 같은 이름의 작성용 파일이 이미 있으면 덮어쓰지 않는다.
 작성용 Markdown의 YAML 블록을 파싱하고, 해석한 Execution Context 요약을 사용자에게 먼저 확인받는다.
+`db-standard-execution-context.yaml`은 사용자가 직접 작성하는 입력 파일이 아니라,
+에이전트가 initial context와 DB 조회 / 검증 결과를 바탕으로 생성 또는 갱신하는 산출물이다.
 
 그 다음 `references/10-execution-context.md`에 따라 아래 값을 확보한다.
 
@@ -110,9 +120,13 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
 ## 작업 절차
 
 0. **시작 온보딩**
-   - 사용할 DBMS 종류와 버전을 먼저 확인
-   - DBMS profile을 확정하고 `db_standard` 논리 저장소의 물리 배치를 결정
+   - 현재 작업 디렉토리의 `db-standard-execution-context.yaml`을 먼저 확인
+   - 기존 파일이 있으면 요약과 정합성 검증 결과를 사용자에게 확인받고 재사용
    - 신규 프로젝트인지 기존 프로젝트 이어서 진행인지 확인
+   - `db-standard-execution-context.yaml` 부재만으로 신규 프로젝트라고 판단하지 않음
+   - 신규 프로젝트이면 사용할 DBMS 종류와 버전을 입력받고 profile을 확정
+   - 기존 프로젝트이면 기존 execution context, 초기 입력 파일, DB 조회 결과에서 DBMS profile 복원을 먼저 시도하고, 복원할 수 없을 때만 DBMS 종류와 버전을 입력받음
+   - DBMS profile을 확정하고 `db_standard` 논리 저장소의 물리 배치를 결정
    - 작업 유형에 맞는 초기 입력 템플릿을 현재 작업 디렉토리에 작성용 Markdown으로 생성
    - 작성용 파일이 이미 있으면 덮어쓰지 않고 사용 여부를 확인
    - 작성된 Markdown의 YAML 블록을 파싱하고 Execution Context 후보를 구성
@@ -124,6 +138,7 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
    - 신규 프로젝트는 initial context로 bootstrap preview를 만들고, field map 생성 후 finalized execution context로 일반 업무 테이블 표준화를 진행
    - 기존 프로젝트면 작성용 파일의 위치 정보를 기준으로 실제 DB 조회 후 프로파일을 복원
    - 해석한 Execution Context 요약과 누락 / 충돌 검증 결과를 사용자에게 확인받음
+   - 확정된 값은 현재 작업 디렉토리의 `db-standard-execution-context.yaml`에 에이전트가 생성 또는 갱신
    - 테이블 정의서에 `target_schema` 역할이 없으면 중단
 
 1. **Execution Context 검증**

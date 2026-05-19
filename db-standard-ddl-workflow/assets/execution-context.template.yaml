@@ -1,13 +1,14 @@
 # Execution Context template for db-standard-ddl-workflow
 # Canonical schema is nested. Do not add legacy flat aliases here.
-startup_mode: existing_project # new_project | existing_project
+# The agent fills this file after initial context parsing and DB validation.
+startup_mode: # new_project | existing_project
 
 project:
   project_id:
   project_nm:
 
 dbms:
-  type: postgresql # postgresql | oracle | mysql | mariadb | sqlserver
+  type: # postgresql | oracle | mysql | mariadb | sqlserver
   version:
   connection_target:
   profile: auto
