@@ -66,9 +66,18 @@ DBMS profile이 정한 db_standard 표준 저장소에 접속
 - 사용자가 요청한 실제 업무 테이블 표준화
 - 표준 사전 기반 물리 테이블명 / 컬럼명 / 타입 결정
 - 업무 테이블 DDL 생성
-- 테이블 정의서 / 컬럼 정의서 INSERT 생성
+- 요청 유형별 테이블 정의서 / 컬럼 정의서 갱신 SQL 생성
 
 이 단계는 기존 표준화 규칙을 그대로 따른다.
+업무 테이블 CREATE / ALTER / DROP preview를 생성하는 모든 작업은 정의서 갱신 계획을 반드시 포함한다.
+정의서 갱신 계획 없이 물리 DDL만 생성하면 안 된다.
+
+요청 유형별 정의서 처리:
+
+- `create_table`: 테이블 정의서 INSERT + 전체 컬럼 정의서 INSERT
+- `alter_add_columns`: 테이블 정의서 row 존재 확인 + 필요 시 테이블 정의서 UPDATE 또는 NO-OP + 추가 컬럼 정의서 INSERT
+- `alter_modify_columns`: 관련 컬럼 정의서 UPDATE + 필요 시 테이블 정의서 UPDATE 또는 NO-OP
+- `drop_columns`: 컬럼 정의서 DELETE / 비활성화 / 이력 처리 정책 확정 후 물리 DROP COLUMN. 정책이 없으면 pending decision
 
 ## 3. 신규 프로젝트 산출물 테이블 bootstrap 규칙
 

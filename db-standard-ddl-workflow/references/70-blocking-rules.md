@@ -29,6 +29,9 @@
 - 신규 프로젝트에서 한글 컬럼명 자동 `snake_case` 변환 불가
 - 테이블 정의서 / 컬럼 정의서 field map 자동 추론 실패
 - 테이블 정의서에 `target_schema` 역할로 추론 가능한 컬럼 없음
+- 요청 유형 누락 또는 `create_table`, `alter_add_columns`, `alter_modify_columns`, `drop_columns` 중 하나로 확정 불가
+- 물리 CREATE / ALTER / DROP DDL은 필요하지만 테이블 정의서 / 컬럼 정의서 갱신 계획을 만들 수 없음
+- `drop_columns` 요청에서 컬럼 정의서 삭제 / 비활성화 / 이력 처리 정책이 확정되지 않음
 
 ### 2.2 요청 계약 위반
 - 데이터베이스 누락

@@ -433,7 +433,8 @@ db-standard-initial-context.new.md
 
 - 프로젝트 ID
 - 프로젝트 명
-- DBMS 종류와 버전
+- DBMS 종류
+- DBMS 접속 대상. 접속 profile이 별도로 관리되면 비워둘 수 있음
 - 대상 database / namespace map
 - 테이블 정의서 한글 테이블명
 - 테이블 정의서 한글 컬럼 목록
@@ -468,16 +469,15 @@ db-standard-initial-context.existing.md
 
 사용자는 가능한 범위에서 아래를 작성한다.
 
-- 프로젝트 ID 또는 프로젝트 명
-- DBMS 정보. 단, DB 조회나 기존 파일로 복원 가능하면 비워둘 수 있음
+- DBMS 종류와 접속 대상. 단, DB 조회나 기존 파일로 복원 가능하면 비워둘 수 있음
 - 대상 database / namespace map
 - 테이블 정의서 테이블명
 - 컬럼 정의서 테이블명
-- 정의서 field map, 또는 자동 추론에 필요한 정보
 - 실행 모드
 
 에이전트는 실제 DB 조회가 가능하면 정의서 컬럼 구조와 comment를 확인하고 field map을 복원한다.
 자동 추론이 불가능하거나 후보가 둘 이상이면 pending decision으로 사용자 확인을 요구한다.
+프로젝트 ID/명, 표준 사전 위치, 정의서 field map, sequence, optional policy는 기본 입력 대상이 아니라 에이전트가 복원 / 생성하는 값이다.
 
 ### 7.4 기존 프로젝트에서 계속 작업하는 사용자
 
@@ -529,6 +529,7 @@ skill은 사전 테이블 자체를 새로 만드는 도구가 아니다. 신규
 
 - 요청 database
 - 대상 namespace. 단, context의 namespace map으로 단일 확정 가능하면 생략 가능
+- 요청 유형: `create_table`, `alter_add_columns`, `alter_modify_columns`, `drop_columns`
 - 테이블 종류
 - 테이블 소유자
 - 주제영역 코드 또는 주제영역 명
@@ -537,6 +538,8 @@ skill은 사전 테이블 자체를 새로 만드는 도구가 아니다. 신규
 - 실행 요청: `SQL만 작성`, `SQL 작성 후 승인 대기`, `실제 DB 실행`
 
 에이전트는 기존 사전 exact / synonym / prohibited-word 조회를 먼저 수행하고, 재사용 불가 항목만 신규 사전 INSERT preview 후보로 제시한다.
+CREATE / ALTER / DROP DDL이 필요한 모든 요청은 테이블 정의서와 컬럼 정의서 갱신 계획을 반드시 포함한다.
+정의서 갱신 계획 없이 물리 DDL만 출력하지 않는다.
 
 ### 7.8 읽기 전용 preview 사용자
 
@@ -604,10 +607,11 @@ db-standard-execution-context.yaml
 9. 마지막 단어 기준 도메인 판단
 10. 기존 단어 / 용어 / 도메인 재사용 가능성 검토
 11. 재사용 불가 시 신규 사전 INSERT preview 생성
-12. 테이블 정의서 INSERT preview 생성
-13. 컬럼 정의서 INSERT preview 생성
-14. DDL preview 생성
-15. blocker / pending decision / preview-only 상태 분리 출력
+12. 요청 유형별 정의서 갱신 계획 생성
+13. 테이블 정의서 INSERT / UPDATE / NO-OP preview 생성
+14. 컬럼 정의서 INSERT / UPDATE / DELETE / 비활성화 / NO-OP preview 생성
+15. CREATE TABLE / ALTER TABLE / DROP COLUMN DDL preview 생성
+16. blocker / pending decision / preview-only 상태 분리 출력
 
 경우별 차이:
 

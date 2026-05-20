@@ -43,6 +43,33 @@ CANONICAL_REQUIRED_PATHS = [
     "run_control.write_execution_enabled",
 ]
 
+INITIAL_NEW_PROJECT_REQUIRED_PATHS = [
+    "startup_mode",
+    "project.project_id",
+    "project.project_nm",
+    "dbms.type",
+    "dbms.connection_target",
+    "metadata_repository.definition_create_mode",
+    "metadata_repository.table_definition.korean_table_name",
+    "metadata_repository.table_definition.korean_columns",
+    "metadata_repository.column_definition.korean_table_name",
+    "metadata_repository.column_definition.korean_columns",
+    "physical_target.db_nm",
+    "physical_target.target_namespace_map",
+    "run_control.run_mode",
+]
+
+INITIAL_EXISTING_PROJECT_REQUIRED_PATHS = [
+    "startup_mode",
+    "dbms.type",
+    "dbms.connection_target",
+    "metadata_repository.table_definition.table_nm",
+    "metadata_repository.column_definition.table_nm",
+    "physical_target.db_nm",
+    "physical_target.target_namespace_map",
+    "run_control.run_mode",
+]
+
 LEGACY_TOP_LEVEL_ALIASES = {
     "project_id",
     "project_nm",
@@ -117,28 +144,13 @@ def main() -> int:
     validate_required_paths("execution-context.template.yaml", context, CANONICAL_REQUIRED_PATHS)
     validate_no_legacy_top_level("execution-context.template.yaml", context)
 
-    for filename in (
-        "initial-context-new-project.template.md",
-        "initial-context-existing-project.template.md",
-    ):
+    initial_template_paths = {
+        "initial-context-new-project.template.md": INITIAL_NEW_PROJECT_REQUIRED_PATHS,
+        "initial-context-existing-project.template.md": INITIAL_EXISTING_PROJECT_REQUIRED_PATHS,
+    }
+
+    for filename, minimal_paths in initial_template_paths.items():
         data = extract_yaml_block(SKILL_DIR / "assets" / filename)
-        minimal_paths = [
-            "startup_mode",
-            "project.project_id",
-            "project.project_nm",
-            "dbms.type",
-            "dbms.version",
-            "dbms.connection_target",
-            "dbms.profile",
-            "standard_repository.logical_nm",
-            "metadata_repository.db_nm",
-            "metadata_repository.project_schema_nm",
-            "physical_target.db_nm",
-            "physical_target.target_namespace_map",
-            "run_control.run_mode",
-            "run_control.catalog_lookup_mode",
-            "run_control.write_execution_enabled",
-        ]
         validate_required_paths(filename, data, minimal_paths)
         validate_no_legacy_top_level(filename, data)
 

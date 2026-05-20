@@ -73,6 +73,7 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
 
 - 데이터베이스
 - 대상 namespace
+- 요청 유형: `create_table`, `alter_add_columns`, `alter_modify_columns`, `drop_columns`
 - 테이블 종류
 - 실행 요청
 - 업무정의 이미지 또는 동등한 텍스트 정의
@@ -168,7 +169,7 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
    - 세 단어 제한을 검증한다.
    - 초과 시 조합안을 제안하고, 승인된 조합만 사용한다.
    - 물리 테이블명은 **논리 세그먼트 조립 후 DBMS 방언 단계에서 최종 casing 적용**한다.
-   - 테이블 정의서 INSERT preview를 만든다.
+   - 요청 유형에 따라 테이블 정의서 INSERT / UPDATE / NO-OP preview를 만든다.
 
 5. **컬럼 목록 순회**
    각 컬럼에 대해 아래 순서를 강제한다.
@@ -180,7 +181,7 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
    5) 마지막 단어 도메인 판단  
    6) term exact / term synonym / word exact / word synonym / prohibited-word 결과에서 재사용 가능한 후보가 있으면 신규 등록보다 재사용  
    7) 필요 시 신규 도메인 / 신규 단어 / 신규 용어 INSERT preview 생성. 단, 명시 승인 전 실행 bundle에는 포함하지 않음  
-   8) 컬럼 정의서 INSERT preview 생성  
+   8) 요청 유형에 따라 컬럼 정의서 INSERT / UPDATE / DELETE / 비활성화 / NO-OP preview 생성
    9) 물리 컬럼명 / 데이터 타입 / 길이 / 제약조건 확정
 
 6. **마지막 단어 도메인 판단**
@@ -199,12 +200,16 @@ Execution Context가 없으면 **절대 진행하지 않는다**.
    - lookup SQL
    - pending decisions
    - 표준사전 보완 INSERT preview (필요 시, 명시 승인 대상)
+   - 정의서 갱신 계획: 테이블 정의서 INSERT/UPDATE/NO-OP, 컬럼 정의서 INSERT/UPDATE/DELETE/비활성화/NO-OP
    - 테이블 정의서 INSERT preview
    - 컬럼 정의서 INSERT preview
    - CREATE SEQUENCE preview (요청 시)
-   - CREATE TABLE preview
+   - CREATE TABLE 또는 ALTER TABLE preview
    - PK / FK / INDEX / UNIQUE INDEX preview
    - COMMENT preview
+
+   업무 테이블 CREATE/ALTER/DROP preview를 생성하는 모든 작업은 테이블 정의서와 컬럼 정의서의 갱신 계획을 반드시 포함한다.
+   정의서 갱신 계획 없이 물리 DDL만 출력하지 않는다.
 
 8. **DBMS 방언 적용**
    - Oracle: `UPPER_SNAKE_CASE`

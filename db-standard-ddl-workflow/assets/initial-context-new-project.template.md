@@ -1,83 +1,34 @@
 # DB Standard Initial Context - New Project
 
-이 파일은 신규 프로젝트 표준화 작업을 시작할 때 사용하는 작성용 템플릿이다.
-에이전트는 최초 실행 시 이 원본을 현재 작업 디렉토리에 `db-standard-initial-context.new.md`로 생성하고,
-사용자가 작성한 YAML 블록을 Execution Context의 기준으로 사용한다.
+이 파일은 신규 프로젝트의 표준화 산출물 구조를 처음 세팅할 때 사용하는 사용자 입력 템플릿이다.
+사용자는 아래 YAML에서 주석이 달린 최소 항목만 작성한다. 고정값, 표준 사전 위치, 정의서 field map, sequence, optional policy는 에이전트가 `db-standard-execution-context.yaml`에 생성 / 관리한다.
 
-작성 규칙:
+작성 원칙:
 
-- 아래 YAML 블록을 작성한다.
-- `dbms.type`을 먼저 작성한다. DBMS에 따라 database / schema / owner / namespace 의미가 달라진다.
-- `standard_repository` 값은 고정값이므로 변경하지 않는다.
-- 테이블 정의서 / 컬럼 정의서 테이블 자체를 만드는 단계는 표준화 작업이 아니다.
+- 표준 단어 / 용어 / 도메인 사전은 사용자가 이미 `db_standard`에 구축해 둔 상태여야 한다.
+- 여기서 만드는 테이블 정의서 / 컬럼 정의서 테이블 자체는 표준화 대상이 아니라 프로젝트 산출물 bootstrap 대상이다.
 - 정의서 테이블 컬럼은 사용자가 한글명으로 입력한다.
-- 에이전트는 한글 컬럼명을 자동으로 영문 `snake_case` 물리 컬럼명으로 변환한다.
-- 영문 컬럼명 후보를 사용자에게 제안하지 않고 자동 적용한다.
-- 웹 검색은 사용하지 않는다.
-- 정의서 테이블 컬럼 타입은 모두 `text`로 고정한다.
+- 에이전트는 한글 컬럼명을 자동 `snake_case` 물리 컬럼명으로 변환한다.
+- 정의서 테이블 컬럼 타입은 모두 `text`로 생성한다.
 - 한글 테이블명 / 컬럼명은 DB comment로 추가한다.
-- 대상 namespace가 하나여도 `target_namespace_map`에는 namespace와 주제영역 / 소유자 코드를 반드시 입력한다.
-- 업무 테이블 표준화에 필요한 필수 role은 에이전트가 자동으로 추론한다.
-- 필수 role을 추론할 수 있는 한글 컬럼이 없으면 에이전트가 누락 컬럼으로 반환한다.
-
-키 안내:
-
-- `startup_mode(작업 유형)`: `new_project`로 고정
-- `project_id(프로젝트 ID)`, `project_nm(프로젝트 명)`: 프로젝트 식별 정보
-- `dbms.type(DBMS 종류)`: `postgresql`, `oracle`, `mysql`, `mariadb`, `sqlserver` 중 하나
-- `dbms.version(DBMS 버전)`: 모르면 비워둘 수 있음
-- `dbms.connection_target(접속 대상)`: Oracle service/PDB, SQL Server instance 등. 접속 도구가 별도 관리하면 비워둘 수 있음
-- `dbms.profile(DBMS 프로파일)`: 보통 `auto` 유지
-- `standard_repository(표준 저장소)`: `db_standard.db_standard` 고정 표준 사전 위치
-- `metadata_repository(프로젝트 산출물 저장소)`: `db_standard.db_standard` 고정 산출물 위치
-- `korean_table_name(한글 테이블명)`: 정의서 테이블의 한글명이며 comment로 사용
-- `physical_table_name(물리 테이블명)`: 비워두면 에이전트가 한글 테이블명에서 자동 생성
-- `korean_columns(한글 컬럼 목록)`: 정의서 테이블에 필요한 컬럼 한글명 목록
-- `physical_target(물리 테이블 대상)`: 실제 업무 테이블이 생성될 DB와 namespace 라우팅
-- `run_control(실행 제어)`: preview / approval / execute 및 조회 / 쓰기 권한 설정
+- 비밀번호, 개인 계정, API key, 로컬 절대경로는 쓰지 않는다.
 
 ```yaml
-startup_mode: new_project # startup_mode(작업 유형)
+startup_mode: new_project # 필수. 신규 프로젝트 최초 세팅이므로 new_project 고정
 
-project: # project(프로젝트 정보)
-  project_id: # project_id(프로젝트 ID)
-  project_nm: # project_nm(프로젝트 명)
+project:
+  project_id: # 필수. 프로젝트를 식별할 짧은 ID
+  project_nm: # 필수. 사람이 알아볼 프로젝트 명
 
-dbms: # dbms(DBMS 정보)
-  type: # type(DBMS 종류): postgresql | oracle | mysql | mariadb | sqlserver
-  version: # version(DBMS 버전). 모르면 비워둘 수 있음
-  connection_target: # connection_target(접속 대상): Oracle service/PDB, SQL Server server/instance 등. 없으면 비움
-  profile: auto # profile(DBMS 프로파일): auto 권장. 필요 시 postgresql | oracle | mysql | mariadb | sqlserver
+dbms:
+  type: # 필수. DBMS 종류: postgresql | oracle | mysql | mariadb | sqlserver
+  connection_target: # 조건부. DB 접속 대상: host/port/service/instance 등. 접속 profile이 따로 있으면 비워둠
 
-standard_repository: # standard_repository(표준 저장소)
-  logical_nm: db_standard # logical_nm(표준 저장소 논리명). 변경 금지
-  db_nm: db_standard # db_nm(데이터베이스 명): PostgreSQL/MySQL/SQL Server에서 db_standard. Oracle은 접속 대상 기준
-  dictionary_schema_nm: db_standard # dictionary_schema_nm(표준 사전 namespace/owner 호환 명): PostgreSQL/SQL Server db_standard, Oracle DB_STANDARD, MySQL은 생략 가능
-  namespace_kind: auto # namespace_kind(DBMS namespace 종류): auto | schema | owner | database
-  object_identifier_pattern: auto # object_identifier_pattern(객체 식별자 패턴): auto 권장
-  word_table_nm: tb_db_com_std_word # word_table_nm(표준 단어 테이블 명)
-  domain_table_nm: tb_db_com_std_dmn # domain_table_nm(표준 도메인 테이블 명)
-  term_table_nm: tb_db_com_std_trm # term_table_nm(표준 용어 테이블 명)
-  word_seq: db_standard.seq_tb_db_com_std_word # word_seq(표준 단어 시퀀스)
-  term_seq: db_standard.seq_tb_db_com_std_trm # term_seq(표준 용어 시퀀스)
-
-metadata_repository: # metadata_repository(프로젝트 산출물 저장소)
-  db_nm: db_standard # db_nm(데이터베이스 명)
-  project_schema_nm: db_standard # project_schema_nm(프로젝트 산출물 namespace 호환 명). db_standard 고정
-  definition_create_mode: create # definition_create_mode(정의서 생성 방식): create | use_existing
-
-  bootstrap_policy: # bootstrap_policy(정의서 테이블 생성 정책)
-    standardization_applied: false # standardization_applied(표준화 적용 여부)
-    web_search_allowed: false # web_search_allowed(웹 검색 허용 여부)
-    physical_name_generation: bootstrap_role_mapping_then_snake_case # physical_name_generation(물리명 생성 방식)
-    column_data_type: text # column_data_type(정의서 컬럼 데이터 타입)
-    comment_source: korean_name # comment_source(comment 원천)
-    role_mapping_mode: reference_first # role_mapping_mode(role 매핑 방식): references/14-bootstrap-role-mapping.md 우선
-
-  table_definition: # table_definition(테이블 정의서)
-    korean_table_name: 테이블 정의서 # korean_table_name(한글 테이블명)
-    physical_table_name: # physical_table_name(물리 테이블명). 비워두면 자동 생성
-    korean_columns: # korean_columns(한글 컬럼 목록). 필요한 컬럼을 추가/삭제 가능
+metadata_repository:
+  definition_create_mode: create # 필수. create | use_existing
+  table_definition:
+    korean_table_name: 테이블 정의서 # 필수. 테이블 정의서의 한글 테이블명
+    korean_columns: # 필수. 테이블 정의서에 필요한 한글 컬럼명 목록
       - 테이블 식별자
       - 대상 데이터베이스
       - 대상 namespace
@@ -90,11 +41,9 @@ metadata_repository: # metadata_repository(프로젝트 산출물 저장소)
       - 테이블 종류
       - 관계 엔터티 명
       - 설명
-
-  column_definition: # column_definition(컬럼 정의서)
-    korean_table_name: 컬럼 정의서 # korean_table_name(한글 테이블명)
-    physical_table_name: # physical_table_name(물리 테이블명). 비워두면 자동 생성
-    korean_columns: # korean_columns(한글 컬럼 목록). 필요한 컬럼을 추가/삭제 가능
+  column_definition:
+    korean_table_name: 컬럼 정의서 # 필수. 컬럼 정의서의 한글 테이블명
+    korean_columns: # 필수. 컬럼 정의서에 필요한 한글 컬럼명 목록
       - 컬럼 식별자
       - 테이블 식별자
       - 컬럼 순서
@@ -112,26 +61,33 @@ metadata_repository: # metadata_repository(프로젝트 산출물 저장소)
       - 기본값
       - 설명
 
-physical_target: # physical_target(물리 테이블 대상)
-  db_nm: # db_nm(업무 대상 데이터베이스/접속 대상 명): DBMS별 의미는 references/11-dbms-profile.md 참고
-  target_namespace_map: # target_namespace_map(대상 namespace 라우팅): PostgreSQL=schema, Oracle=owner/schema, MySQL=database, SQL Server=schema
-    - namespace_nm: # namespace_nm(namespace 명). 예: PostgreSQL schema, Oracle owner, MySQL database
-      namespace_kind: auto # namespace_kind: auto | schema | owner | database
-      subject_area_cds: # subject_area_cds(주제영역 코드 목록)
-        -
-      subject_area_nms: # subject_area_nms(주제영역 명 목록)
-        -
-      owner_codes: # owner_codes(테이블 소유자 코드 목록)
-        -
+physical_target:
+  db_nm: # 필수. 실제 업무 테이블이 생성될 대상 DB 또는 접속 대상 명
+  target_namespace_map:
+    - namespace_nm: # 필수. 실제 업무 테이블 대상 namespace. PostgreSQL=schema, Oracle=owner/schema, MySQL=database, SQL Server=schema
+      subject_area_cds: [] # 필수 권장. 이 namespace로 라우팅할 주제영역 코드 목록. 모르면 owner_codes라도 작성
+      subject_area_nms: [] # 선택. 사람이 이해할 주제영역 명 목록
+      owner_codes: [] # 필수 권장. 이 namespace로 라우팅할 테이블 소유자 코드 목록. 모르면 subject_area_cds라도 작성
 
-run_control: # run_control(실행 제어)
-  run_mode: preview # run_mode(실행 모드): preview | approval | execute
-  catalog_lookup_mode: unavailable # catalog_lookup_mode(카탈로그 조회 방식): live | provided_results | unavailable
-  write_execution_enabled: false # write_execution_enabled(쓰기 실행 허용 여부)
-
-optional_policies: # optional_policies(선택 정책)
-  identifier_case_policy: auto # identifier_case_policy(식별자 대소문자 정책)
-  sequence_naming_policy: SEQ_<TABLE_NAME> # sequence_naming_policy(시퀀스 명명 정책)
-  owner_resolution_mode: direct # owner_resolution_mode(소유자 해석 방식): direct | word_dictionary | project_mapping
-  namespace_routing_key: table_owner # namespace_routing_key(namespace 라우팅 기준): table_owner | subject_area_cd | project_mapping
+run_control:
+  run_mode: preview # 필수. preview | approval | execute
 ```
+
+에이전트가 생성 / 관리하는 값:
+
+- `standard_repository.*`: `db_standard` 고정 표준 사전 위치
+- `metadata_repository.db_nm`, `metadata_repository.project_schema_nm`: `db_standard` 고정 산출물 위치
+- `metadata_repository.bootstrap_policy`: 정의서 bootstrap 고정 정책
+- `metadata_repository.*.physical_table_name`: 비워두면 한글 테이블명에서 자동 생성
+- `metadata_repository.*.field_map`: 정의서 bootstrap 후 자동 생성
+- `metadata_repository.*.id_sequence`: sequence 기반이면 DB 조회 또는 사용자 확인으로 확정
+- `dbms.version`, `dbms.profile`: DBMS type과 profile 규칙으로 확정
+- `run_control.catalog_lookup_mode`, `run_control.write_execution_enabled`: 권한 / 실행 모드에 따라 확정
+- `optional_policies.*`: 프로젝트 정책이 있을 때만 확정
+
+에이전트 처리:
+
+- 위 YAML을 파싱한 뒤 정의서 테이블 DDL preview와 내부 field map을 생성한다.
+- 정의서 bootstrap에는 표준화 / 웹 검색 / 도메인 판단을 적용하지 않는다.
+- 필수 role을 추론할 수 있는 한글 컬럼이 없으면 blocked로 반환하고 필요한 한글 컬럼 후보를 알려준다.
+- 확정 후 `db-standard-execution-context.yaml`을 생성하거나 갱신한다.

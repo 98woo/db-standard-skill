@@ -1,83 +1,51 @@
-[DB 표준화 작업 시작 템플릿]
+[DB 표준화 업무 테이블 요청 템플릿]
 
 주의:
-- 이 파일은 개별 테이블 생성/변경 요청을 정리할 때 사용하는 보조 템플릿이다.
-- 최초 Execution Context 입력은 아래 Markdown 템플릿 중 하나를 사용한다.
-  - initial-context-new-project.template.md
-  - initial-context-existing-project.template.md
+- 이 파일은 Execution Context가 확정된 뒤 개별 업무 테이블 생성/변경 요청을 정리할 때 사용하는 보조 템플릿이다.
+- 최초 context 입력은 `initial-context-new-project.template.md` 또는 `initial-context-existing-project.template.md`를 사용한다.
+- 물리 DDL이 CREATE/ALTER/DROP 중 무엇이든 테이블 정의서와 컬럼 정의서 갱신 계획은 필수다.
+- 정의서 갱신 계획 없이 물리 DDL만 출력하면 안 된다.
 
-작업 유형 :
-- 신규 프로젝트 표준화 작업 시작
-또는
-- 기존 프로젝트 표준화 작업 이어서 진행
+[요청 유형]
+요청 유형 : (create_table / alter_add_columns / alter_modify_columns / drop_columns)
+실행 요청 : (SQL만 작성 / SQL 작성 후 승인 대기 / 실제 DB 실행)
 
-[공통 입력]
-프로젝트 ID :
-프로젝트 명 :
-DBMS 종류 : (postgresql / oracle / mysql / mariadb / sqlserver)
-DBMS 버전 : (모르면 비워둘 수 있음)
-DBMS 접속 대상 : (Oracle service/PDB, SQL Server instance 등. 접속 도구가 별도 관리하면 비워둘 수 있음)
-DBMS profile : auto (권장)
-실행 요청 :
-- SQL만 작성
-또는
-- SQL 작성 후 승인 대기
-또는
-- 실제 DB 실행
-
-[신규 프로젝트일 때 추가 입력]
-물리 대상 데이터베이스/접속 대상 :
-물리 대상 namespace 라우팅 :
-- namespace명(주제영역코드 또는 소유자코드)
-- namespace명(주제영역코드1, 주제영역코드2)
-
-참고: namespace 의미는 DBMS별로 다름
-- PostgreSQL: schema
-- Oracle: schema/user/owner
-- MySQL/MariaDB: database
-- SQL Server: schema
-
-프로젝트 산출물 namespace : db_standard (고정)
-테이블 정의서 한글 테이블명 :
-테이블 정의서 한글 컬럼 목록 :
-- 한글 컬럼명
-
-컬럼 정의서 한글 테이블명 :
-컬럼 정의서 한글 컬럼 목록 :
-- 한글 컬럼명
-
-참고 :
-- 신규 프로젝트 정의서 테이블 생성은 표준화 작업이 아니다.
-- 에이전트가 한글 컬럼명을 자동 snake_case 물리 컬럼명으로 변환한다.
-- 정의서 테이블 컬럼 타입은 모두 text로 생성한다.
-- 한글 테이블명 / 컬럼명은 comment로 추가한다.
-
-[기존 프로젝트 이어서 진행일 때 추가 입력]
-물리 대상 데이터베이스/접속 대상 :
-물리 대상 namespace 라우팅 :
-- namespace명(주제영역코드 또는 소유자코드)
-프로젝트 산출물 namespace : db_standard (고정)
-테이블 정의서 테이블명 :
-컬럼 정의서 테이블명 :
-
-[테이블 생성/변경 요청]
+[공통 업무 정보]
+요청 database : (선택. Execution Context와 단일 확정 가능하면 생략 가능)
 대상 namespace : (선택. namespace 라우팅으로 단일 확정 가능하면 생략 가능)
 테이블 종류 : (일반 테이블 / 공간정보 테이블 / 전자정부 프레임워크 / 연계 테이블)
-
 테이블 소유자 :
 주제 영역 코드 : (선택. 없으면 테이블 소유자 코드로 namespace 라우팅)
 주제 영역 명 :
 주제 영역 그룹 명 :
 테이블 명 :
 
+[create_table일 때]
 컬럼:
-- 컬럼명 | PK(Y/N) | NULL허용(Y/N) | FK(optional) | UNIQUE(optional) | INDEX(optional) | DEFAULT(optional)
+- 컬럼명 | PK(Y/N) | NULL허용(Y/N) | 희망타입(optional) | FK(optional) | UNIQUE(optional) | INDEX(optional) | DEFAULT(optional)
 
-추가사항(없으면 생략) :
+[alter_add_columns일 때]
+기존 물리 테이블명 : (알고 있으면 작성. 모르면 테이블 명으로 조회)
+추가 컬럼:
+- 컬럼명 | NULL허용(Y/N) | 희망타입(optional) | FK(optional) | UNIQUE(optional) | INDEX(optional) | DEFAULT(optional)
+
+[alter_modify_columns일 때]
+기존 물리 테이블명 : (알고 있으면 작성. 모르면 테이블 명으로 조회)
+변경 컬럼:
+- 기존 컬럼명 | 변경 후 컬럼명(optional) | 변경 내용(타입/길이/NULL/DEFAULT/제약조건 등)
+
+[drop_columns일 때]
+기존 물리 테이블명 : (알고 있으면 작성. 모르면 테이블 명으로 조회)
+삭제 컬럼:
+- 컬럼명 | 삭제 사유 | 정의서 처리 방식(삭제/비활성화/이력처리 중 하나. 모르면 비워둠)
+
+[추가사항]
 - FK :
 - UNIQUE :
 - INDEX :
 - DEFAULT :
+- CHECK :
+- COMMENT :
 - 기타 :
 
 [공간정보 테이블일 때 권장 추가 입력]
@@ -85,3 +53,9 @@ DBMS profile : auto (권장)
 - SRID :
 - SPATIAL INDEX :
 - GEOM NULL :
+
+[정의서 갱신 원칙]
+- create_table: 테이블 정의서 INSERT + 전체 컬럼 정의서 INSERT + CREATE TABLE 계열 DDL을 함께 생성한다.
+- alter_add_columns: 테이블 정의서 row 존재 확인 + 신규 컬럼 정의서 INSERT + ALTER TABLE ADD COLUMN 계열 DDL을 함께 생성한다.
+- alter_modify_columns: 컬럼 정의서 UPDATE + ALTER COLUMN 계열 DDL을 함께 생성한다.
+- drop_columns: 컬럼 정의서 삭제/비활성화/이력 처리 정책을 확정한 뒤 DROP COLUMN 계열 DDL을 생성한다.

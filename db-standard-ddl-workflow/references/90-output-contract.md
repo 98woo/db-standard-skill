@@ -11,9 +11,10 @@
 3. Blocking Issues
 4. Pending Decisions
 5. Lookup SQL Bundle
-6. Preview INSERT SQL
-7. Preview DDL SQL
-8. Notes
+6. Definition Change Plan
+7. Preview INSERT / UPDATE SQL
+8. Preview DDL SQL
+9. Notes
 
 ## 2. 상태 표기
 
@@ -56,9 +57,15 @@
 -- SELECT ...
 ```
 
-## Preview INSERT SQL
+## Definition Change Plan
+- table_definition: INSERT / UPDATE / NO-OP
+- column_definition: INSERT / UPDATE / DELETE / DISABLE / NO-OP
+- reason:
+
+## Preview INSERT / UPDATE SQL
 ```sql
 -- INSERT ...
+-- UPDATE ...
 ```
 
 ## Preview DDL SQL
@@ -97,6 +104,7 @@ preview-only이면 아래를 명시한다.
 - `target_namespace` <-> CREATE TABLE / ALTER TABLE / COMMENT target namespace
 - `subject_area_cd` / `table_owner` <-> `target_namespace_map` routing result
 - `physical_column_name` <-> column definitions / comments / indexes
+- definition change plan <-> physical CREATE / ALTER / DROP DDL
 - `logical_table_name` <-> COMMENT ON TABLE
 - `logical_column_name` <-> COMMENT ON COLUMN
 - index / constraint names <-> final rendered identifier case

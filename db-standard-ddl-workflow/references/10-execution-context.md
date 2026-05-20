@@ -74,9 +74,11 @@ db-standard-execution-context.yaml
 ## 2. initial context 필수 필드
 
 Execution Context의 canonical schema는 nested schema다.
-신규 / 기존 초기 입력 템플릿과 `assets/execution-context.template.yaml`은 이 구조를 기준으로 작성한다.
+다만 사용자가 작성하는 initial context는 full canonical schema가 아니다.
+사용자 initial context에는 사람이 꼭 제공해야 하는 최소 입력만 둔다.
+고정값, 표준 사전 위치, 정의서 field map, sequence, 선택 정책은 에이전트가 `assets/execution-context.template.yaml`을 기준으로 확정 파일에 채운다.
 
-공통 최소 필드:
+신규 프로젝트 initial context:
 
 ```yaml
 startup_mode:
@@ -85,67 +87,48 @@ project:
   project_nm:
 dbms:
   type:
-  version:
   connection_target:
-  profile:
-standard_repository:
-  logical_nm: db_standard
-  db_nm: db_standard
-  dictionary_schema_nm: db_standard
-  namespace_kind: auto
-  object_identifier_pattern: auto
-  word_table_nm: tb_db_com_std_word
-  domain_table_nm: tb_db_com_std_dmn
-  term_table_nm: tb_db_com_std_trm
 metadata_repository:
-  db_nm: db_standard
-  project_schema_nm: db_standard
+  definition_create_mode:
+  table_definition:
+    korean_table_name:
+    korean_columns:
+  column_definition:
+    korean_table_name:
+    korean_columns:
 physical_target:
   db_nm:
   target_namespace_map:
-    - namespace_nm:
-      namespace_kind:
-      subject_area_cds:
-      subject_area_nms:
-      owner_codes:
 run_control:
   run_mode:
-  catalog_lookup_mode:
-  write_execution_enabled:
 ```
 
-신규 프로젝트는 정의서 bootstrap을 위해 아래도 필요하다.
+기존 프로젝트 initial context:
 
 ```yaml
-metadata_repository:
-  definition_create_mode:
-  bootstrap_policy:
-  table_definition:
-    korean_table_name:
-    physical_table_name:
-    korean_columns:
-  column_definition:
-    korean_table_name:
-    physical_table_name:
-    korean_columns:
-```
-
-기존 프로젝트는 정의서 조회 / 복원을 위해 아래도 필요하다.
-
-```yaml
+startup_mode:
+dbms:
+  type:
+  connection_target:
 metadata_repository:
   table_definition:
     table_nm:
-    id_sequence:
-    field_map:
   column_definition:
     table_nm:
-    id_sequence:
-    field_map:
+physical_target:
+  db_nm:
+  target_namespace_map:
+run_control:
+  run_mode:
 ```
 
-신규 프로젝트에서는 initial context로 정의서 테이블 bootstrap preview를 생성할 수 있다.
-단, 일반 업무 테이블 표준화로 넘어가려면 아래 finalized 필드까지 확정되어야 한다.
+해석 원칙:
+
+- initial context의 빈 값은 사용자가 모르는 값 또는 에이전트 복원 대상이라는 뜻이다.
+- 신규 프로젝트의 `dbms.type`, `project.*`, 정의서 한글 테이블명/컬럼명, 물리 대상 DB/namespace map, `run_mode`는 사용자 확인이 필요하다.
+- 기존 프로젝트의 `dbms.type`, `dbms.connection_target`은 기존 context, connector, DB 조회로 복원 가능하면 비워둘 수 있다.
+- 기존 프로젝트의 정의서 `field_map`은 initial context에 쓰지 않는 것이 기본이다. 에이전트가 실제 정의서 테이블 구조와 comment로 복원한다.
+- 일반 업무 테이블 표준화로 넘어가려면 아래 finalized 필드까지 확정되어야 한다.
 
 ## 3. finalized execution context 필수 필드
 

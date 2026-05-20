@@ -41,13 +41,16 @@
 6. 신규 단어 INSERT preview (필요 시, 명시 승인 대상)
 7. 신규 용어 INSERT preview (필요 시, 명시 승인 대상)
 8. 신규 프로젝트 정의서 테이블 bootstrap DDL preview (필요 시)
-9. 테이블 정의서 INSERT preview
-10. 컬럼 정의서 INSERT preview
-11. CREATE SEQUENCE preview (요청 시)
-12. CREATE TABLE preview
-13. PK / FK preview
-14. INDEX / UNIQUE INDEX preview
-15. COMMENT preview
+9. 정의서 갱신 계획
+10. 테이블 정의서 INSERT / UPDATE / NO-OP preview
+11. 컬럼 정의서 INSERT / UPDATE / DELETE / 비활성화 / NO-OP preview
+12. CREATE SEQUENCE preview (요청 시)
+13. CREATE TABLE / ALTER TABLE / DROP COLUMN preview
+14. PK / FK preview
+15. INDEX / UNIQUE INDEX preview
+16. COMMENT preview
+
+정의서 갱신 계획 없이 물리 CREATE / ALTER / DROP DDL만 출력하지 않는다.
 
 ## 3. 신규 프로젝트 정의서 테이블 bootstrap DDL 규칙
 
@@ -150,6 +153,39 @@ INSERT INTO {standard_artifact_object_identifier(metadata_repository.column_defi
 
 컬럼 정의서는 `table_id`로 테이블 정의서를 참조하는 구조를 권장한다.
 `table_id`가 없다면 컬럼 정의서 field map에도 `target_db`, `target_schema`, `physical_table_name` 역할이 필요하다.
+
+## 5.1 요청 유형별 정의서 갱신 규칙
+
+업무 테이블 DDL preview를 생성하는 모든 요청은 먼저 정의서 갱신 계획을 만든다.
+
+### create_table
+
+- 테이블 정의서 중복 검사를 수행한다.
+- 중복이 없으면 테이블 정의서 INSERT preview를 생성한다.
+- 요청 전체 컬럼에 대한 컬럼 정의서 INSERT preview를 생성한다.
+- 그 다음 CREATE TABLE / PK / FK / INDEX / COMMENT preview를 생성한다.
+
+### alter_add_columns
+
+- 테이블 정의서 row 존재 여부를 `target_db + target_schema + physical_table_name` 기준으로 확인한다.
+- 테이블 정의서 row가 없으면 blocked 또는 pending decision이다. 임의로 신규 테이블 정의서 INSERT를 생성하지 않는다.
+- 테이블 속성 변경이 없으면 테이블 정의서는 NO-OP로 명시한다.
+- 추가 컬럼마다 컬럼 정의서 INSERT preview를 생성한다.
+- 그 다음 ALTER TABLE ADD COLUMN / COMMENT / INDEX / 제약조건 preview를 생성한다.
+
+### alter_modify_columns
+
+- 대상 컬럼 정의서 row 존재 여부를 확인한다.
+- 컬럼 정의서 UPDATE preview를 생성한다.
+- 컬럼명이 바뀌면 논리 컬럼명과 물리 컬럼명 변경 내용을 함께 반영한다.
+- 그 다음 ALTER COLUMN / RENAME COLUMN / COMMENT / INDEX / 제약조건 preview를 생성한다.
+
+### drop_columns
+
+- 대상 컬럼 정의서 row 존재 여부를 확인한다.
+- 프로젝트 정책에 따라 컬럼 정의서 DELETE, 비활성화 UPDATE, 또는 이력 처리 SQL을 생성한다.
+- 정책이 없으면 DROP COLUMN preview를 만들지 않고 pending decision으로 돌린다.
+- 정의서 처리 방식이 확정된 뒤에만 DROP COLUMN preview를 생성한다.
 
 ## 6. 신규 도메인 INSERT preview 템플릿
 
@@ -275,6 +311,42 @@ CREATE TABLE {target_object_identifier} (
 - length / precision / scale
 - nullability
 - default (있을 때만)
+
+## 9.1 ALTER TABLE preview 템플릿
+
+기존 테이블 변경 요청은 요청 유형별 정의서 갱신 계획을 먼저 생성한 뒤 아래 물리 DDL preview를 생성한다.
+
+### alter_add_columns
+
+```sql
+ALTER TABLE {target_object_identifier}
+  ADD COLUMN {physical_column_name} {data_type_and_constraints};
+```
+
+### alter_modify_columns
+
+DBMS별 문법 차이가 크므로 logical template로 출력하고, 최종 출력 시 `references/80-dbms-dialects.md`의 profile을 적용한다.
+
+```sql
+ALTER TABLE {target_object_identifier}
+  ALTER COLUMN {physical_column_name} {alter_column_action};
+```
+
+컬럼명 변경이 필요한 경우:
+
+```sql
+ALTER TABLE {target_object_identifier}
+  RENAME COLUMN {old_physical_column_name} TO {new_physical_column_name};
+```
+
+### drop_columns
+
+정의서 DELETE / 비활성화 / 이력 처리 정책이 확정된 경우에만 생성한다.
+
+```sql
+ALTER TABLE {target_object_identifier}
+  DROP COLUMN {physical_column_name};
+```
 
 ## 10. PK / FK 렌더링 규칙
 

@@ -21,13 +21,29 @@
 Execution Context가 없으면 먼저 신규 프로젝트인지 기존 프로젝트 이어서 진행인지 선택해야 한다.
 DBMS는 신규 프로젝트이거나 기존 프로젝트에서 profile을 복원할 수 없을 때만 입력받는다.
 
+### 요청 유형
+
+업무 테이블 요청은 반드시 아래 중 하나로 분류한다.
+
+- `create_table`: 신규 업무 테이블 생성
+- `alter_add_columns`: 기존 업무 테이블에 컬럼 추가
+- `alter_modify_columns`: 기존 업무 테이블의 컬럼명 / 타입 / 길이 / NULL / DEFAULT / 제약조건 변경
+- `drop_columns`: 기존 업무 테이블의 컬럼 삭제
+
+요청 유형이 명시되지 않았지만 문맥상 명확하면 에이전트가 추론할 수 있다.
+추론이 불명확하면 pending decision으로 사용자에게 확인한다.
+
+물리 DDL이 필요한 모든 요청은 정의서 갱신 계획을 포함해야 한다.
+정의서 갱신 계획 없이 CREATE / ALTER / DROP DDL만 출력하지 않는다.
+
 ### A. 이미지 + 텍스트
 가장 권장되는 방식이다.
 
 필수 텍스트:
-- 데이터베이스
+- 데이터베이스. 단, Execution Context의 `physical_target.db_nm`으로 단일 확정 가능하면 생략 가능
 - 대상 namespace  
   단, Execution Context의 `physical_target.target_namespace_map`과 주제영역 / 소유자 코드로 단일 namespace를 확정할 수 있으면 생략 가능
+- 요청 유형
 - 테이블 종류
 - 실행 요청
 
@@ -43,9 +59,10 @@ DBMS는 신규 프로젝트이거나 기존 프로젝트에서 profile을 복원
 ### B. 텍스트 only
 이미지 없이도 가능하지만, 아래 필드가 더 필요하다.
 
-- 데이터베이스
+- 데이터베이스. 단, Execution Context의 `physical_target.db_nm`으로 단일 확정 가능하면 생략 가능
 - 대상 namespace  
   단, Execution Context의 `physical_target.target_namespace_map`과 주제영역 / 소유자 코드로 단일 namespace를 확정할 수 있으면 생략 가능
+- 요청 유형
 - 테이블 종류
 - 테이블 소유자
 - 주제 영역 코드  
@@ -55,6 +72,13 @@ DBMS는 신규 프로젝트이거나 기존 프로젝트에서 profile을 복원
 - 테이블 명
 - 컬럼 목록
 - 실행 요청
+
+요청 유형별 추가 입력:
+
+- `create_table`: 전체 컬럼 목록
+- `alter_add_columns`: 기존 테이블 식별 정보와 추가 컬럼 목록
+- `alter_modify_columns`: 기존 테이블 식별 정보, 기존 컬럼명, 변경 후 컬럼 정의
+- `drop_columns`: 기존 테이블 식별 정보, 삭제 컬럼명, 정의서 처리 방식. 정의서 처리 방식이 없으면 pending decision
 
 ## 2. 허용 테이블 종류
 
@@ -149,8 +173,9 @@ DBMS는 신규 프로젝트이거나 기존 프로젝트에서 profile을 복원
 
 아래는 즉시 blocked다.
 
-- 데이터베이스 누락
+- 데이터베이스 누락, 그리고 Execution Context로 단일 확정 불가
 - 테이블 종류 누락
+- 요청 유형 누락 또는 추론 불가
 - 실행 요청 누락
 - Execution Context에 `physical_target.target_namespace_map`이 없음
 - 요청 대상 namespace가 `physical_target.target_namespace_map`에 없음
@@ -158,6 +183,7 @@ DBMS는 신규 프로젝트이거나 기존 프로젝트에서 profile을 복원
 - 요청 대상 namespace가 없고 주제영역 / 소유자 코드로 단일 namespace를 확정할 수 없음
 - 이미지 요청인데 이미지 핵심 필드 누락
 - 한 요청에 엔터티가 2개 이상 섞임
+- 물리 CREATE / ALTER / DROP DDL은 필요하지만 테이블 정의서 / 컬럼 정의서 갱신 계획을 만들 수 없음
 
 ## 9. 내부 처리 흐름
 
@@ -167,6 +193,7 @@ DBMS는 신규 프로젝트이거나 기존 프로젝트에서 profile을 복원
 1. 표준 단어 / 용어 / 도메인 사전 조회
 2. 신규 도메인 / 단어 / 용어 필요 여부 판정
 3. 영문 테이블명 / 컬럼명 생성
-4. 정의서 INSERT SQL 생성
-5. CREATE TABLE / 제약조건 / 인덱스 SQL 생성
-6. 실행 요청에 따라 preview 또는 approval / execute plan 반환
+4. 요청 유형별 정의서 갱신 계획 생성
+5. 정의서 INSERT / UPDATE / DELETE / 비활성화 / NO-OP SQL 생성
+6. CREATE TABLE / ALTER TABLE / DROP COLUMN / 제약조건 / 인덱스 SQL 생성
+7. 실행 요청에 따라 preview 또는 approval / execute plan 반환

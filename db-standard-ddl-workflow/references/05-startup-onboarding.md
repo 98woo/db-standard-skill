@@ -123,12 +123,10 @@ DBMS 확인 규칙:
 
 - 프로젝트 ID
 - 프로젝트 명
-- DBMS 종류 / 버전
-- DBMS connection target
-- DBMS profile
+- DBMS 종류
+- DBMS connection target. 접속 profile이 별도로 관리되면 비워둘 수 있음
 - 실제 물리 테이블 대상 데이터베이스
 - 실제 물리 테이블 대상 namespace 라우팅
-- 프로젝트 산출물 namespace 논리명: `db_standard` 고정
 - 테이블 정의서 한글 테이블명
 - 테이블 정의서 한글 컬럼 목록
 - 컬럼 정의서 한글 테이블명
@@ -145,6 +143,8 @@ DBMS 확인 규칙:
 - 표준 도메인 테이블: `tb_db_com_std_dmn`
 - 프로젝트 산출물 DB: `db_standard`
 - 프로젝트 산출물 namespace: `db_standard`
+- DBMS profile 기본값: `auto`
+- catalog lookup mode와 write execution flag는 실행 모드와 권한에 따라 에이전트가 확정
 
 정의서 테이블 bootstrap 규칙:
 
@@ -204,16 +204,16 @@ Execution Context를 복원하는 흐름이다.
 
 `db-standard-initial-context.existing.md`로 입력받아야 하는 값:
 
-- 프로젝트 ID 또는 프로젝트 명
-- DBMS 종류 / 버전
-- DBMS connection target
-- DBMS profile
+- DBMS 종류. 기존 파일, connector, 또는 DB 조회로 복원 가능하면 비워둘 수 있음
+- DBMS connection target. 접속 도구/profile이 별도로 관리하면 비워둘 수 있음
 - 실제 물리 테이블 대상 데이터베이스
 - 후보 대상 namespace와 주제영역 / 소유자 코드 매핑
-- 프로젝트 산출물 namespace 논리명: `db_standard` 고정
 - 테이블 정의서 테이블명
 - 컬럼 정의서 테이블명
 - 실행 모드
+
+기본 템플릿에는 사용자가 꼭 작성해야 하는 최소 필드만 노출한다.
+프로젝트 ID/명, `standard_repository` 상세값, `metadata_repository.db_nm`, `metadata_repository.project_schema_nm`, 정의서 `field_map`, 식별자 sequence, 선택 정책은 에이전트가 DB 조회로 복원하거나 필요할 때만 사용자에게 추가 확인한다.
 
 에이전트는 입력 후 아래를 조회한다.
 
